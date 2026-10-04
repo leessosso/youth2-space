@@ -19,7 +19,7 @@
 
 | 클레임 | 값 |
 |--------|-----|
-| `iss` | `mokyang-flow` |
+| `iss` | `youth2-space` (`TRAINING_SSO_ISSUER`) |
 | `aud` | `class-management` |
 | `sub` | Firestore `User.id` |
 | `name` | 로그인 계정 이름 |

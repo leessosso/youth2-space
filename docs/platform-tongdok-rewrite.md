@@ -1,6 +1,6 @@
 # `/tongdok` → tongdok-mu (same-domain rewrite)
 
-훈련(`/training`)과 동일 패턴: 통독 앱은 mokyang-flow(youth2-space)와 **같은 도메인**의 `/tongdok` path로 tongdok-mu에 붙인다. iframe·UI 이식 없음. **로그인·SSO는 훈련과 합치지 않음** (통독 앱 자체 인증).
+훈련(`/training`)과 동일 패턴: 통독 앱은 mokyang-flow(youth2-space)와 **같은 도메인**의 `/tongdok` path로 tongdok-mu에 붙인다. iframe·UI 이식 없음. 로그인 없이 연 `/tongdok`은 통독 앱 자체 세션으로 그대로 연다. 로그인한 셸의 「통독으로 가기」만 별도 짧은 티켓을 쓴다 (`docs/platform-tongdok-sso.md`). 훈련 SSO 발급 경로는 바꾸지 않는다.
 
 ## 환경 변수
 
@@ -50,10 +50,11 @@ Next.js 셸은 `/tongdok/tongdok.rsc`·`/tongdok.rsc`를 **자체 App Router fli
 2. Network: document·`_next` 요청이 mokyang-flow host의 `/tongdok/...`로 가고 200.
 3. tongdok-mu 단독 URL `{TONGDOK_ORIGIN}/tongdok`과 동일 화면.
 
-## 훈련 SSO와의 관계
+## 훈련 SSO·통독 티켓
 
-- `/api/platform/training-sso`, `TRAINING_ORIGIN` rewrite는 기존과 동일.
-- 통독에는 SSO 티켓 엔트리를 추가하지 않는다 (이 슬라이스 범위).
+- `/api/platform/training-sso`, `TRAINING_ORIGIN` rewrite는 기존과 동일. 훈련·통독 티켓 issuer는 `TRAINING_SSO_ISSUER`(`youth2-space`).
+- 로그인한 「통독으로 가기」는 `/api/platform/tongdok-sso`로 짧은 티켓을 받아 `/tongdok/sso/consume`으로 간다. 계약은 `docs/platform-tongdok-sso.md`.
+- 비로그인 `GET /tongdok`(및 `/tongdok/*`, `/tongdok.rsc`)은 티켓 없이 공개이며 rewrite로 통독 앱에 전달된다.
 
 ## NextAuth 미들웨어
 

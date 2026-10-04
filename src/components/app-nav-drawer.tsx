@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useId, useState } from "react";
-import { TONGDOK_PATH_PREFIX } from "@/lib/platform/tongdok-proxy";
+import { TONGDOK_SSO_ENTRY_PATH } from "@/lib/platform/tongdok-sso-constants";
 import { TRAINING_SSO_ENTRY_PATH } from "@/lib/platform/training-sso-constants";
 import type { NavItem } from "@/components/app-nav";
 
@@ -144,7 +144,7 @@ export function AppNavDrawer({ items }: { items: NavItem[] }) {
                 훈련으로 가기
               </a>
               <a
-                href={TONGDOK_PATH_PREFIX}
+                href={TONGDOK_SSO_ENTRY_PATH}
                 className={`${linkBase} ${linkInactive}`}
               >
                 통독으로 가기
