@@ -52,7 +52,7 @@ Next.js 셸은 `/tongdok/tongdok.rsc`·`/tongdok.rsc`를 **자체 App Router fli
 
 ## 훈련 SSO·통독 티켓
 
-- `/api/platform/training-sso`, `TRAINING_ORIGIN` rewrite, `TRAINING_SSO_ISSUER`는 기존과 동일.
+- `/api/platform/training-sso`, `TRAINING_ORIGIN` rewrite는 기존과 동일. 훈련·통독 티켓 issuer는 `TRAINING_SSO_ISSUER`(`youth2-space`).
 - 로그인한 「통독으로 가기」는 `/api/platform/tongdok-sso`로 짧은 티켓을 받아 `/tongdok/sso/consume`으로 간다. 계약은 `docs/platform-tongdok-sso.md`.
 - 비로그인 `GET /tongdok`(및 `/tongdok/*`, `/tongdok.rsc`)은 티켓 없이 공개이며 rewrite로 통독 앱에 전달된다.
 

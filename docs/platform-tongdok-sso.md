@@ -2,7 +2,7 @@
 
 셸(2청년회 · `https://youth2-space.vercel.app`)에서 **통독으로 가기**를 누르면, 훈련 SSO와 같은 방식으로 NextAuth 세션 기준의 짧은 HS256 JWT를 발급하고 통독 앱 consume 경로로 리다이렉트합니다.
 
-훈련 발급 코드(`/api/platform/training-sso`, `mintTrainingSsoTicket`)는 바꾸지 않습니다. issuer 문자열은 훈련과 같은 `TRAINING_SSO_ISSUER`(`mokyang-flow`)입니다. audience만 `tongdok`으로 달라 훈련 티켓을 통독에 재사용할 수 없습니다.
+훈련·통독 티켓의 issuer는 같은 `TRAINING_SSO_ISSUER`(`youth2-space`)입니다. audience만 `tongdok`으로 달라 훈련 티켓을 통독에 재사용할 수 없습니다.
 
 통독 앱(`leessosso/tongdok`)은 이 티켓을 아직 검증·소비하지 않습니다. 아래 계약은 셸이 보내는 그대로이며, consume 구현은 통독 레포 follow-up입니다.
 
@@ -27,7 +27,7 @@
 
 | 클레임 | 값 |
 |--------|-----|
-| `iss` | `mokyang-flow` (`TRAINING_SSO_ISSUER`, 변경하지 않음) |
+| `iss` | `youth2-space` (`TRAINING_SSO_ISSUER`) |
 | `aud` | `tongdok` |
 | `sub` | Firestore `User.id` |
 | `name` | 로그인 계정 이름 |
@@ -62,6 +62,6 @@
 `leessosso/tongdok` `main`에는 `src/app/sso/consume`도 `PLATFORM_SSO_SECRET`도 없습니다. basePath는 이미 `/tongdok`입니다. 통독 쪽에서 구현할 것:
 
 1. `PLATFORM_SSO_SECRET`을 셸과 동일하게 설정.
-2. basePath 기준 `src/app/sso/consume` (브라우저 URL `/tongdok/sso/consume`)에서 `ticket` 쿼리를 HS256으로 검증 (`iss=mokyang-flow`, `aud=tongdok`, `exp` 120초).
+2. basePath 기준 `src/app/sso/consume` (브라우저 URL `/tongdok/sso/consume`)에서 `ticket` 쿼리를 HS256으로 검증 (`iss=youth2-space`, `aud=tongdok`, `exp` 120초).
 3. 검증 성공 시 통독 자체 세션을 열고, 실패·쿼리 없음은 기존 통독 로그인(또는 공개 홈)으로 둔다. 셸은 비로그인 `/tongdok`을 막지 않는다.
 4. 멤버 마스터나 권한 관리 화면은 이 셸 단계에 없다. `sub`/`name`/`phone`/`role`만 받는다.
