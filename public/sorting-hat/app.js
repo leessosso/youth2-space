@@ -834,7 +834,7 @@ function initAdminApp() {
             alert('조 구성 중 오류가 발생했습니다: ' + error.message);
         } finally {
             applyLeadersBtn.disabled = false;
-            applyLeadersBtn.textContent = '✅ 조 구성 적용하기';
+            applyLeadersBtn.textContent = '조 구성 적용하기';
         }
     });
 
@@ -852,7 +852,7 @@ function initAdminApp() {
             statusIndicator.classList.remove('active');
             statusIndicator.querySelector('.status-text').textContent = '배정 중지됨';
             statusInfo.textContent = '현재 사용자들은 배정을 받을 수 없습니다.';
-            statusInfo.style.color = 'var(--color-parchment)';
+            statusInfo.style.color = 'var(--color-text-muted)';
         }
     });
 
@@ -972,7 +972,7 @@ function initAdminApp() {
                 alert('명단 저장 중 오류가 발생했습니다: ' + error.message);
             } finally {
                 saveMemberListBtn.disabled = false;
-                saveMemberListBtn.textContent = '💾 명단 저장하기';
+                saveMemberListBtn.textContent = '명단 저장하기';
             }
         });
     }
@@ -995,7 +995,7 @@ function initAdminApp() {
                 alert('명단 삭제 중 오류가 발생했습니다: ' + error.message);
             } finally {
                 deleteMemberListBtn.disabled = false;
-                deleteMemberListBtn.textContent = '🗑️ 명단 삭제하기';
+                deleteMemberListBtn.textContent = '명단 삭제하기';
             }
         });
     }
@@ -1025,7 +1025,7 @@ function initAdminApp() {
                 alert('명단 저장 중 오류가 발생했습니다: ' + error.message);
             } finally {
                 saveSeatMemberListBtn.disabled = false;
-                saveSeatMemberListBtn.textContent = '💾 명단 저장하기';
+                saveSeatMemberListBtn.textContent = '명단 저장하기';
             }
         });
     }
@@ -1048,7 +1048,7 @@ function initAdminApp() {
                 alert('명단 삭제 중 오류가 발생했습니다: ' + error.message);
             } finally {
                 deleteSeatMemberListBtn.disabled = false;
-                deleteSeatMemberListBtn.textContent = '🗑️ 명단 삭제하기';
+                deleteSeatMemberListBtn.textContent = '명단 삭제하기';
             }
         });
     }
@@ -1135,7 +1135,7 @@ function initAdminApp() {
                     if (newPassword.length < 4) {
                         alert('새 비밀번호는 최소 4자리 이상이어야 합니다.');
                         saveSecretConfigBtn.disabled = false;
-                        saveSecretConfigBtn.textContent = '💾 비밀 설정 저장하기';
+                        saveSecretConfigBtn.textContent = '비밀 설정 저장하기';
                         return;
                     }
                     updates['config/secretPassword'] = newPassword;
@@ -1149,7 +1149,7 @@ function initAdminApp() {
                 alert('저장 중 오류가 발생했습니다: ' + error.message);
             } finally {
                 saveSecretConfigBtn.disabled = false;
-                saveSecretConfigBtn.textContent = '💾 비밀 설정 저장하기';
+                saveSecretConfigBtn.textContent = '비밀 설정 저장하기';
             }
         });
     }
@@ -1168,7 +1168,7 @@ function initAdminApp() {
             seatStatusIndicator.classList.remove('active');
             seatStatusIndicator.querySelector('.status-text').textContent = '자리 뽑기 중지됨';
             seatStatusInfo.textContent = '현재 임원들은 자리를 배정받을 수 없습니다.';
-            seatStatusInfo.style.color = 'var(--color-parchment)';
+            seatStatusInfo.style.color = 'var(--color-text-muted)';
         }
     });
 
@@ -1210,7 +1210,7 @@ function initAdminApp() {
                 alert('제한 명단 저장 중 오류가 발생했습니다: ' + error.message);
             } finally {
                 saveSeatRestrictionsBtn.disabled = false;
-                saveSeatRestrictionsBtn.textContent = '💾 제한 명단 저장';
+                saveSeatRestrictionsBtn.textContent = '제한 명단 저장';
             }
         });
     }
