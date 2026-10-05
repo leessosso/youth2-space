@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getUserById } from "@/lib/store/users";
+import { resolveSsoSubjectFromSession } from "@/lib/platform/sso-subject";
 import {
   isTrainingSsoConfigured,
   mintTrainingSsoTicket,
@@ -9,11 +10,15 @@ import {
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+/** Firestore(asia-northeast3)와 가깝게 — 폴백 getUserById·한국 사용자 TTFB. */
+export const preferredRegion = "icn1";
 
 export async function GET(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const login = new URL("/login", request.url);
+    login.searchParams.set("callbackUrl", new URL(request.url).pathname);
+    return NextResponse.redirect(login);
   }
 
   if (session.user.mustChangePassword) {
@@ -28,7 +33,9 @@ export async function GET(request: Request) {
     );
   }
 
-  const user = await getUserById(session.user.id);
+  // 세션에 name/phone/role이 있으면 Firestore 왕복 생략 (구 JWT만 폴백).
+  const fromSession = resolveSsoSubjectFromSession(session);
+  const user = fromSession ?? (await getUserById(session.user.id));
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }

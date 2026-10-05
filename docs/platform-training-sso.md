@@ -15,6 +15,14 @@
 - **발급**: `GET /api/platform/training-sso` — NextAuth 로그인 필수. `mustChangePassword`이면 `/change-password`로 먼저 보냄.
 - **내비·홈 카드**: `/training` 직행 대신 위 API를 사용 (`TRAINING_SSO_ENTRY_PATH`).
 
+## 지연 시간 (셸 측)
+
+로그인 클릭 경로: `PlatformTrainingLink` → `GET /api/platform/training-sso` → 302 `/training/sso/consume?ticket=…` → rewrite.
+
+- **세션 JWT에 `name`/`phone`/`role`이 있으면** Firestore `getUserById`를 하지 않고 바로 HS256 서명한다 (구세션만 폴백).
+- 라우트 `preferredRegion = icn1` (서울). Firestore `(default)`는 `asia-northeast3`.
+- `api/platform/*`는 미들웨어 matcher에서 제외 — 라우트가 자체로 세션·비밀번호 변경을 검사한다.
+
 ## 티켓 (JWT, HS256)
 
 | 클레임 | 값 |

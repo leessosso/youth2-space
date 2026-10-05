@@ -7,6 +7,7 @@ import type { Role } from "@/lib/types";
 declare module "next-auth" {
   interface User {
     role: Role;
+    phone: string | null;
     mustChangePassword: boolean;
   }
   interface Session {
@@ -15,6 +16,8 @@ declare module "next-auth" {
       email: string;
       name: string;
       role: Role;
+      /** 로그인 시점 전화. SSO 티켓용. 구세션 JWT에는 없을 수 있음. */
+      phone?: string | null;
       mustChangePassword: boolean;
     };
   }
@@ -44,6 +47,7 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
           email: user.email,
           name: user.name,
           role: user.role,
+          phone: user.phone ?? null,
           mustChangePassword: userMustChangePassword(user),
         };
       },
