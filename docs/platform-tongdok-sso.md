@@ -23,6 +23,14 @@
 
 비로그인 사용자가 주소창에 `/tongdok`을 여는 경우는 이 API를 타지 않습니다.
 
+## 지연 시간 (셸 측)
+
+로그인 클릭 경로: `PlatformTongdokLink` → `GET /api/platform/tongdok-sso` → 302 `/tongdok/sso/consume?ticket=…` → rewrite.
+
+- **세션 JWT에 `name`/`phone`/`role`이 있으면** Firestore `getUserById`를 하지 않고 바로 HS256 서명한다 (구세션만 폴백).
+- 라우트 `preferredRegion = icn1` (서울). Firestore `(default)`는 `asia-northeast3`.
+- `api/platform/*`는 미들웨어 matcher에서 제외 — 라우트가 자체로 세션·비밀번호 변경을 검사한다.
+
 ## 티켓 (JWT, HS256)
 
 | 클레임 | 값 |

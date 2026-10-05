@@ -53,6 +53,7 @@ export const authConfig: NextAuthConfig = {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.phone = user.phone ?? null;
         token.mustChangePassword = user.mustChangePassword;
       }
       if (trigger === "update" && session?.user && "mustChangePassword" in session.user) {
@@ -65,6 +66,9 @@ export const authConfig: NextAuthConfig = {
         session.user.id = token.id as string;
         session.user.role = token.role as import("@/lib/types").Role;
         session.user.mustChangePassword = token.mustChangePassword === true;
+        if (Object.prototype.hasOwnProperty.call(token, "phone")) {
+          session.user.phone = (token.phone as string | null) ?? null;
+        }
       }
       return session;
     },
