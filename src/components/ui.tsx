@@ -1,4 +1,28 @@
-import { type ButtonHTMLAttributes, type InputHTMLAttributes } from "react";
+/**
+ * App-facing UI primitives backed by shadcn/ui (`src/components/ui/*`).
+ * Preserves legacy APIs (Button variants, CardHeader title/subtitle, Badge tone)
+ * so shell screens can migrate gradually.
+ */
+import type { ButtonHTMLAttributes, ComponentProps, InputHTMLAttributes } from "react";
+import { cn } from "@/lib/utils";
+import { Badge as ShadcnBadge } from "@/components/ui/badge";
+import { Button as ShadcnButton } from "@/components/ui/button";
+import {
+  Card as ShadcnCard,
+  CardDescription,
+  CardHeader as ShadcnCardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input as ShadcnInput } from "@/components/ui/input";
+import { Label as ShadcnLabel } from "@/components/ui/label";
+import { Textarea as ShadcnTextarea } from "@/components/ui/textarea";
+
+const buttonVariantMap = {
+  primary: "default",
+  secondary: "outline",
+  ghost: "ghost",
+  danger: "destructive",
+} as const;
 
 export function Card({
   children,
@@ -8,11 +32,14 @@ export function Card({
   className?: string;
 }) {
   return (
-    <div
-      className={`rounded-2xl border border-border bg-surface shadow-sm ${className}`}
+    <ShadcnCard
+      className={cn(
+        "gap-0 rounded-2xl border border-border bg-surface py-0 shadow-sm ring-0",
+        className,
+      )}
     >
       {children}
-    </div>
+    </ShadcnCard>
   );
 }
 
@@ -24,10 +51,14 @@ export function CardHeader({
   subtitle?: string;
 }) {
   return (
-    <div className="border-b border-border px-4 py-3 sm:px-5">
-      <h2 className="text-base font-semibold text-foreground">{title}</h2>
-      {subtitle && <p className="mt-0.5 text-sm text-muted">{subtitle}</p>}
-    </div>
+    <ShadcnCardHeader className="border-b border-border px-4 py-3 sm:px-5">
+      <CardTitle className="text-base font-semibold text-foreground">{title}</CardTitle>
+      {subtitle ? (
+        <CardDescription className="mt-0.5 text-sm text-muted-foreground">
+          {subtitle}
+        </CardDescription>
+      ) : null}
+    </ShadcnCardHeader>
   );
 }
 
@@ -36,69 +67,74 @@ export function Button({
   variant = "primary",
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "secondary" | "ghost" | "danger";
+  variant?: keyof typeof buttonVariantMap;
 }) {
-  const base =
-    "inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition disabled:opacity-50";
-  const variants = {
-    primary: "bg-primary text-white hover:bg-primary/90",
-    secondary:
-      "border border-border bg-surface text-foreground hover:bg-background",
-    ghost: "text-foreground/80 hover:bg-stone-100",
-    danger: "bg-red-700 text-white hover:bg-red-600",
-  };
   return (
-    <button className={`${base} ${variants[variant]} ${className}`} {...props} />
-  );
-}
-
-export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      className="w-full rounded-lg border border-stone-300 bg-surface px-3 py-2 text-sm text-foreground placeholder:text-stone-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+    <ShadcnButton
+      variant={buttonVariantMap[variant]}
+      size="lg"
+      className={cn("px-4", className)}
       {...props}
     />
   );
 }
 
-export function Textarea(
-  props: React.TextareaHTMLAttributes<HTMLTextAreaElement>,
-) {
+export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <textarea
-      className="w-full rounded-lg border border-stone-300 bg-surface px-3 py-2 text-sm text-foreground placeholder:text-stone-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+    <ShadcnInput
+      className={cn("h-9 bg-surface px-3 text-sm", className)}
+      {...props}
+    />
+  );
+}
+
+export function Textarea({
+  className,
+  ...props
+}: ComponentProps<typeof ShadcnTextarea>) {
+  return (
+    <ShadcnTextarea
       rows={4}
+      className={cn("bg-surface px-3 text-sm", className)}
       {...props}
     />
   );
 }
 
-export function Label({ children }: { children: React.ReactNode }) {
+export function Label({
+  children,
+  className,
+  ...props
+}: ComponentProps<typeof ShadcnLabel>) {
   return (
-    <label className="mb-1 block text-sm font-medium text-stone-700">
+    <ShadcnLabel className={cn("mb-1 text-stone-700", className)} {...props}>
       {children}
-    </label>
+    </ShadcnLabel>
   );
 }
+
+const badgeToneClass = {
+  neutral: "border-transparent bg-stone-100 text-stone-700",
+  green: "border-transparent bg-emerald-50 text-emerald-800",
+  blue: "border-transparent bg-sky-50 text-sky-800",
+  accent: "border-transparent bg-accent/15 text-accent",
+} as const;
 
 export function Badge({
   children,
   tone = "neutral",
+  className,
 }: {
   children: React.ReactNode;
-  tone?: "neutral" | "green" | "blue" | "accent";
+  tone?: keyof typeof badgeToneClass;
+  className?: string;
 }) {
-  const tones = {
-    neutral: "bg-stone-100 text-stone-700",
-    green: "bg-emerald-50 text-emerald-800",
-    blue: "bg-sky-50 text-sky-800",
-    accent: "bg-accent/15 text-accent",
-  };
   return (
-    <span
-      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${tones[tone]}`}
+    <ShadcnBadge
+      variant="secondary"
+      className={cn("rounded-full font-medium", badgeToneClass[tone], className)}
     >
       {children}
-    </span>
+    </ShadcnBadge>
   );
 }

@@ -78,7 +78,7 @@ export default async function DashboardPage() {
 
       <div>
         <h2 className="text-xl font-semibold text-foreground">안녕하세요, {user.name}님</h2>
-        <p className="mt-1 text-sm text-muted">역할: {roleLabel(user.role)}</p>
+        <p className="mt-1 text-sm text-muted-foreground">역할: {roleLabel(user.role)}</p>
       </div>
 
       <HomeCardGrid cards={homeCards} />
