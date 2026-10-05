@@ -51,22 +51,21 @@ function HomeCardLink({ card }: { card: HomeCard }) {
   }
 
   return (
-    <Card className="transition hover:shadow-md">
-      <CardHeader title={card.title} subtitle={card.description} />
-      <div className="flex items-center justify-between px-4 py-3 sm:px-5">
+    <CardHrefLink
+      href={card.href}
+      className="block rounded-2xl transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+    >
+      <Card>
+        <CardHeader title={card.title} subtitle={card.description} />
         {card.badge && (
-          <span className="rounded-full bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent">
-            {card.badge}
-          </span>
+          <div className="flex items-center px-4 py-3 sm:px-5">
+            <span className="rounded-full bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent">
+              {card.badge}
+            </span>
+          </div>
         )}
-        <CardHrefLink
-          href={card.href}
-          className="ml-auto text-sm font-medium text-primary hover:underline"
-        >
-          열기
-        </CardHrefLink>
-      </div>
-    </Card>
+      </Card>
+    </CardHrefLink>
   );
 }
 
