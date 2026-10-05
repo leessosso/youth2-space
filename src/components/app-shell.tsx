@@ -102,8 +102,9 @@ export function AppShell({
             <p className="min-w-0 max-w-[28%] shrink truncate text-sm font-medium sm:max-w-[36%]">
               {user.name}
             </p>
-            <LogoutButton className="shrink-0" />
-            <LeaderAxisChrome leaderNav={<AppNavDrawer items={nav} />} />
+            <LeaderAxisChrome
+              leaderNav={<AppNavDrawer items={nav} footer={<LogoutButton />} />}
+            />
           </div>
         </header>
         <AppMain>{children}</AppMain>

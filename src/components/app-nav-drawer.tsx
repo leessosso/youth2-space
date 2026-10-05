@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useState, type ReactNode } from "react";
 import { TONGDOK_SSO_ENTRY_PATH } from "@/lib/platform/tongdok-sso-constants";
 import { TRAINING_SSO_ENTRY_PATH } from "@/lib/platform/training-sso-constants";
 import type { NavItem } from "@/components/app-nav";
@@ -17,7 +17,13 @@ const linkBase =
 const linkInactive = "text-stone-700 hover:bg-stone-100";
 const linkActive = "bg-primary/10 font-medium text-primary";
 
-export function AppNavDrawer({ items }: { items: NavItem[] }) {
+export function AppNavDrawer({
+  items,
+  footer,
+}: {
+  items: NavItem[];
+  footer?: ReactNode;
+}) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const titleId = useId();
@@ -150,6 +156,9 @@ export function AppNavDrawer({ items }: { items: NavItem[] }) {
                 통독으로 가기
               </a>
             </div>
+            {footer ? (
+              <div className="border-t border-border px-3 py-4">{footer}</div>
+            ) : null}
           </div>
         </div>
       )}
