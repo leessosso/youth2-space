@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import type { HomeCard } from "@/lib/platform/home-cards";
 import { TRAINING_SSO_ENTRY_PATH } from "@/lib/platform/training-sso-constants";
-import { Card, CardHeader } from "@/components/ui";
+import { Badge, Card, CardHeader } from "@/components/ui";
 
 function CardHrefLink({
   href,
@@ -37,13 +37,9 @@ function HomeCardLink({ card }: { card: HomeCard }) {
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-lg font-semibold text-primary">{card.title}</h3>
-            {card.badge && (
-              <span className="rounded-full bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent">
-                {card.badge}
-              </span>
-            )}
+            {card.badge && <Badge tone="accent">{card.badge}</Badge>}
           </div>
-          <p className="mt-2 text-sm text-muted">{card.description}</p>
+          <p className="mt-2 text-sm text-muted-foreground">{card.description}</p>
         </div>
         <span className="mt-4 text-sm font-medium text-primary">바로 가기 →</span>
       </CardHrefLink>
@@ -59,9 +55,7 @@ function HomeCardLink({ card }: { card: HomeCard }) {
         <CardHeader title={card.title} subtitle={card.description} />
         {card.badge && (
           <div className="flex items-center px-4 py-3 sm:px-5">
-            <span className="rounded-full bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent">
-              {card.badge}
-            </span>
+            <Badge tone="accent">{card.badge}</Badge>
           </div>
         )}
       </Card>

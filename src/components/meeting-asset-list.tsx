@@ -1,11 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   publishMeetingCommentary,
   unpublishMeetingCommentary,
 } from "@/app/actions";
 import { Button } from "@/components/ui";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   getAssetPreviewKind,
   isCommentaryAssetPublished,
@@ -39,14 +45,6 @@ export function MeetingAssetList({
     setPreviewError(null);
   }, []);
 
-  useEffect(() => {
-    if (!preview) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closePreview();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [preview, closePreview]);
 
   async function openPreview(asset: MeetingAsset) {
     const localKind = getAssetPreviewKind(asset.fileName);
@@ -164,42 +162,37 @@ export function MeetingAssetList({
         <p className="mt-2 text-sm text-red-700" role="alert">{previewError}</p>
       )}
 
-      {preview && (
-        <div
-          className="fixed inset-0 z-50 flex flex-col bg-stone-900/80 p-2 sm:p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-label={`${preview.fileName} 미리보기`}
-          onClick={closePreview}
+      <Dialog open={!!preview} onOpenChange={(open) => { if (!open) closePreview(); }}>
+        <DialogContent
+          showCloseButton={false}
+          className="flex h-[min(90vh,100%)] w-full max-w-4xl flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl"
+          aria-label={preview ? `${preview.fileName} 미리보기` : undefined}
         >
-          <div
-            className="mx-auto flex h-full w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between gap-2 border-b border-stone-100 px-3 py-2 sm:px-4">
-              <p className="truncate text-sm font-medium text-stone-900">{preview.fileName}</p>
-              <Button type="button" variant="secondary" className="shrink-0 px-3 py-1.5 text-xs" onClick={closePreview}>
-                닫기
-              </Button>
-            </div>
-            <div className="min-h-0 flex-1 overflow-auto bg-stone-100 p-2 sm:p-3">
-              {preview.kind === "pdf" ? (
-                <iframe
-                  title={preview.fileName}
-                  src={preview.url}
-                  className="h-[min(80vh,100%)] w-full min-h-[50vh] rounded-lg border border-stone-200 bg-white"
-                />
-              ) : (
-                <img
-                  src={preview.url}
-                  alt={preview.fileName}
-                  className="mx-auto max-h-[min(80vh,100%)] w-auto max-w-full rounded-lg object-contain"
-                />
-              )}
-            </div>
+          <DialogHeader className="flex-row items-center justify-between space-y-0 border-b border-border px-3 py-2 sm:px-4">
+            <DialogTitle className="truncate text-sm font-medium">
+              {preview?.fileName}
+            </DialogTitle>
+            <Button type="button" variant="secondary" className="shrink-0 px-3 py-1.5 text-xs" onClick={closePreview}>
+              닫기
+            </Button>
+          </DialogHeader>
+          <div className="min-h-0 flex-1 overflow-auto bg-stone-100 p-2 sm:p-3">
+            {preview?.kind === "pdf" ? (
+              <iframe
+                title={preview.fileName}
+                src={preview.url}
+                className="h-[min(80vh,100%)] w-full min-h-[50vh] rounded-lg border border-stone-200 bg-white"
+              />
+            ) : preview ? (
+              <img
+                src={preview.url}
+                alt={preview.fileName}
+                className="mx-auto max-h-[min(80vh,100%)] w-auto max-w-full rounded-lg object-contain"
+              />
+            ) : null}
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

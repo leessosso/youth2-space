@@ -1,13 +1,14 @@
 import Link from "next/link";
+import { Badge } from "@/components/ui";
 
 export function PollDayBanner({ href }: { href: string }) {
   const external = href.startsWith("http://") || href.startsWith("https://");
 
   const inner = (
     <>
-      <span className="inline-flex shrink-0 items-center rounded-md bg-accent/15 px-2 py-0.5 text-xs font-semibold text-accent">
+      <Badge tone="accent" className="shrink-0 rounded-md font-semibold">
         투표일
-      </span>
+      </Badge>
       <span className="min-w-0 flex-1">
         <span className="block font-semibold text-primary">총회 투표에 참여해 주세요</span>
         <span className="mt-0.5 block text-sm text-stone-600">
