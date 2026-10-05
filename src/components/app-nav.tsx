@@ -33,6 +33,7 @@ export function AppNav({
             <Link
               key={item.href}
               href={item.href}
+              prefetch={false}
               className={`${linkBase} ${active ? linkActive : linkInactive}`}
             >
               {item.label}
@@ -51,6 +52,7 @@ export function AppNav({
           <Link
             key={item.href}
             href={item.href}
+            prefetch={false}
             className={`${linkBase} ${active ? linkActive : linkInactive}`}
           >
             {item.label}

@@ -5,7 +5,7 @@ import {
 } from "./src/lib/platform/tongdok-proxy";
 import {
   resolveTrainingOrigin,
-  trainingRewriteDestination,
+  trainingRewriteRules,
 } from "./src/lib/platform/training-proxy";
 
 const nextConfig: NextConfig = {
@@ -22,11 +22,8 @@ const nextConfig: NextConfig = {
 
     const trainingOrigin = resolveTrainingOrigin();
     if (trainingOrigin) {
-      const dest = trainingRewriteDestination(trainingOrigin);
-      afterFiles.push(
-        { source: "/training", destination: dest },
-        { source: "/training/:path*", destination: `${dest}/:path*` },
-      );
+      // beforeFiles: `/training.rsc`가 셸 App Router RSC로 잡히기 전에 upstream으로.
+      beforeFiles.push(...trainingRewriteRules(trainingOrigin));
     }
 
     const tongdokOrigin = resolveTongdokOrigin();

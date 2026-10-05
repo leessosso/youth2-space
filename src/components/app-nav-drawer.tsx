@@ -129,6 +129,7 @@ export function AppNavDrawer({
                     <li key={item.href}>
                       <Link
                         href={item.href}
+                        prefetch={false}
                         className={`${linkBase} ${active ? linkActive : linkInactive}`}
                         onClick={close}
                       >

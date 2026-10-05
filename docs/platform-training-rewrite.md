@@ -15,13 +15,20 @@ MVP §9.1: 훈련 프로그램은 2청년회 셸(`https://youth2-space.vercel.ap
 
 ## Rewrite 매핑 (class-management 봇 권장 패턴과 동일)
 
+`next.config.ts`는 훈련 규칙을 **`beforeFiles`**에 넣어, 셸이 `/training.rsc` 같은 flight URL을 자체 App Router RSC로 해석하지 않고 upstream으로 보냅니다. (통독 `docs/platform-tongdok-rewrite.md`와 동일 계열)
+
 | youth2-space (source) | destination |
 |----------------------|-------------|
 | `/training` | `{TRAINING_ORIGIN}/training` |
 | `/training/:path*` | `{TRAINING_ORIGIN}/training/:path*` |
+| `/training.rsc`, `/training/training.rsc` | 동일 path (1:1) — **middleware** `NextResponse.rewrite`로 upstream 전달 |
 
 예: `TRAINING_ORIGIN=https://class-management-chi-amber.vercel.app` →  
 `/training/foo` → `https://class-management-chi-amber.vercel.app/training/foo`
+
+### 루트 RSC flight (middleware)
+
+출석 화면 이후 등에서 셸 edge가 `/training/...` RSC prefetch를 자체 flight로 처리하면 404가 난다 (통독 `/tongdok.rsc` 이중 prefix·App Router 가로채기와 같은 계열). `src/middleware.ts`가 `proxyTrainingRootFlightRequest`로 `/training.rsc`·`/training/training.rsc`를 class-management에 rewrite한다. `TRAINING_ORIGIN`에 `/training` path가 붙어 있어도 `normalizeTrainingOrigin`이 제거한다.
 
 ## class-management 쪽 기대 설정
 

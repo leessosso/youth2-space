@@ -23,6 +23,32 @@
 - 라우트 `preferredRegion = icn1` (서울). Firestore `(default)`는 `asia-northeast3`.
 - `api/platform/*`는 미들웨어 matcher에서 제외 — 라우트가 자체로 세션·비밀번호 변경을 검사한다.
 
+### Server-Timing · 구조화 로그
+
+성공·조기 리다이렉트/오류 응답에 `Server-Timing` 헤더와 `console.info` JSON(`msg=platform_sso_timing`)을 붙인다. **티켓 JWT는 헤더·로그에 넣지 않는다.**
+
+| 메트릭 | 의미 |
+|--------|------|
+| `auth` | NextAuth `auth()` |
+| `subject` | 세션에서 클레임 해석 (Firestore 미사용) |
+| `firestore` | `getUserById` 폴백 시에만 |
+| `sign` | HS256 티켓 서명 |
+| `source` | `desc="session"` \| `firestore` (또는 `unauth` 등 조기 종료 reason) |
+| `total` | 핸들러 전체 |
+
+프로덕션 Vercel 로그·브라우저 Network의 Server-Timing으로 shell 티켓 구간을 분리 측정한다.
+
+### Hop (rewrite) 단축 여부
+
+현재 Location은 **같은 호스트** `/training/sso/consume?ticket=…`이다. 브라우저는 shell edge를 한 번 더 타고 `TRAINING_ORIGIN`으로 rewrite된다.
+
+`Location`을 `TRAINING_ORIGIN` 절대 URL로 바꾸면 shell rewrite hop은 줄일 수 있지만:
+
+1. 훈련 consume이 세션 쿠키를 **class-management 호스트**에 심으면 same-domain(`/training`) 세션과 어긋난다.
+2. issuer/audience/SECRET 계약은 유지돼도, consume 후 shell origin으로 되돌리는 리다이렉트·쿠키 path 조정이 **훈련(class-management) 쪽 협조** 없이는 깨진다.
+
+따라서 셸은 same-origin consume Location을 유지한다. hop 단축은 훈련 앱이 shell 호스트 기준 Set-Cookie·후속 리다이렉트를 보장한 뒤 follow-up으로 검토한다.
+
 ## 티켓 (JWT, HS256)
 
 | 클레임 | 값 |
