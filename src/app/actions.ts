@@ -12,11 +12,16 @@ import {
   assignMemberToGroup as assignMemberToGroupStore,
   createGroup as createGroupStore,
   createMember as createMemberStore,
+  getGroupById,
+  getMemberById,
+  getMemberByUserId,
   handoverGroupLeader,
+  linkMemberUser,
   listAllMembers,
   listCurrentLeaderUserIds,
+  listGroups,
 } from "@/lib/store/groups";
-import { appointOfficer, endOfficerYear, listActiveOfficers, vacateOfficer } from "@/lib/store/officers";
+import { appointOfficer, endOfficerYear, vacateOfficer } from "@/lib/store/officers";
 import { hashPassword } from "@/lib/password";
 import { isPhoneLike, normalizePhone } from "@/lib/phone";
 import {
@@ -25,7 +30,6 @@ import {
   getUserById,
   isPhoneUsedByAnotherUser,
 } from "@/lib/store/users";
-import { getGroupById } from "@/lib/store/groups";
 import {
   notifyPastorsAndAdminsOfFamilyReport,
   notifyUsersOfAnnouncement,
@@ -212,21 +216,6 @@ export async function sendFamilyReportMessage(
   return { ok: true };
 }
 
-export async function handoverLeader(groupId: string, newLeaderId: string) {
-  if (!(await requireAppManager())) return { error: "권한이 없습니다." };
-
-  const newLeader = await getUserById(newLeaderId);
-  if (!newLeader || newLeader.role !== "LEADER") {
-    return { error: "새 가장은 리더 역할 사용자여야 합니다." };
-  }
-
-  await handoverGroupLeader(groupId, newLeaderId);
-
-  revalidatePath("/admin/handover");
-  revalidatePath("/groups");
-  return { ok: true };
-}
-
 export async function setPollDayAction(formData: FormData) {
   const manager = await requireAppManager();
   if (!manager) return { error: "권한이 없습니다." };
@@ -271,35 +260,80 @@ export async function startNextFamilyTerm() {
   return { ok: true, term: next };
 }
 
-function readNewLeader(formData: FormData) {
-  const name = String(formData.get("name") ?? "").trim();
+function readAccountCredentials(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const phoneRaw = String(formData.get("phone") ?? "").trim();
   const password = String(formData.get("password") ?? "");
-  if (!name) return { ok: false as const, error: "이름을 입력해 주세요." };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false as const, error: "이메일을 확인해 주세요." };
   if (!isPhoneLike(phoneRaw)) return { ok: false as const, error: "로그인용 전화번호를 확인해 주세요." };
   if (password.length < 8) return { ok: false as const, error: "비밀번호는 8자 이상이어야 합니다." };
-  return { ok: true as const, name, email, phone: normalizePhone(phoneRaw), password };
+  return { ok: true as const, email, phone: normalizePhone(phoneRaw), password };
 }
 
-async function createLeaderAccount(formData: FormData) {
-  const fields = readNewLeader(formData);
-  if (!fields.ok) return fields;
-  const existing = await getUserByEmail(fields.email);
+async function createLeaderNamedAccount(input: { name: string; email: string; phone: string; password: string }) {
+  const existing = await getUserByEmail(input.email);
   if (existing) return { ok: false as const, error: "이미 등록된 이메일입니다." };
-  if (await isPhoneUsedByAnotherUser(fields.phone)) {
-    return { ok: false as const, error: "이미 등록된 전화번호입니다." };
+  if (await isPhoneUsedByAnotherUser(input.phone)) {
+    return { ok: false as const, error: "이미 등록된 전화번호입니다. 기존 계정을 연결해 주세요." };
   }
   const user = await createUser({
-    email: fields.email,
-    passwordHash: await hashPassword(fields.password),
-    name: fields.name,
-    phone: fields.phone,
+    email: input.email,
+    passwordHash: await hashPassword(input.password),
+    name: input.name,
+    phone: input.phone,
     role: "LEADER",
     mustChangePassword: true,
   });
   return { ok: true as const, user };
+}
+
+/** 성도를 리더 계정과 연결한다. 계정이 없으면 만들고, 있으면 그 계정을 쓴다. */
+async function resolveLeaderForMember(formData: FormData) {
+  const memberId = String(formData.get("memberId") ?? "").trim();
+  const member = memberId ? await getMemberById(memberId) : null;
+  if (!member) return { ok: false as const, error: "성도를 선택해 주세요." };
+
+  if (member.userId) {
+    const user = await getUserById(member.userId);
+    if (!user || user.role !== "LEADER") {
+      return { ok: false as const, error: "이 성도에 연결된 계정을 가장·임원으로 쓸 수 없습니다." };
+    }
+    return { ok: true as const, user, member };
+  }
+
+  const mode = String(formData.get("accountMode") ?? "");
+  if (mode === "existing") {
+    const linkUserId = String(formData.get("linkUserId") ?? "").trim();
+    if (!linkUserId) return { ok: false as const, error: "연결할 계정을 선택해 주세요." };
+    const linked = await linkMemberToLeader(member.id, linkUserId);
+    if (!linked.ok) return linked;
+    return { ok: true as const, user: linked.user, member: linked.member };
+  }
+
+  const credentials = readAccountCredentials(formData);
+  if (!credentials.ok) return credentials;
+  const created = await createLeaderNamedAccount({ name: member.name, ...credentials });
+  if (!created.ok) return created;
+  await linkMemberUser(member.id, created.user.id);
+  return { ok: true as const, user: created.user, member: { ...member, userId: created.user.id } };
+}
+
+async function linkMemberToLeader(memberId: string, userId: string) {
+  const member = await getMemberById(memberId);
+  if (!member) return { ok: false as const, error: "성도를 선택해 주세요." };
+  if (member.userId && member.userId !== userId) {
+    return { ok: false as const, error: "이 성도는 이미 다른 계정과 연결되어 있습니다." };
+  }
+  const user = await getUserById(userId);
+  if (!user || user.role !== "LEADER") {
+    return { ok: false as const, error: "리더 계정을 선택해 주세요." };
+  }
+  const taken = await getMemberByUserId(user.id);
+  if (taken && taken.id !== member.id) {
+    return { ok: false as const, error: "이 계정은 이미 다른 성도와 연결되어 있습니다." };
+  }
+  if (member.userId !== user.id) await linkMemberUser(member.id, user.id);
+  return { ok: true as const, user, member: { ...member, userId: user.id } };
 }
 
 function officerSeatError(result: "seat_taken" | "already_officer") {
@@ -307,41 +341,79 @@ function officerSeatError(result: "seat_taken" | "already_officer") {
   return "이 사람은 올해 다른 직책이 있습니다.";
 }
 
-export async function appointOfficerAction(formData: FormData) {
-  if (!(await requirePastor())) return { ok: false as const, error: "임원 직책은 목사만 지정할 수 있습니다." };
-  const title = String(formData.get("title") ?? "");
-  if (!OFFICER_TITLES.includes(title as OfficerTitle)) return { ok: false as const, error: "잘못된 직책입니다." };
-  const userId = String(formData.get("userId") ?? "");
-  const leader = await getUserById(userId);
-  if (!leader || leader.role !== "LEADER") return { ok: false as const, error: "리더 계정을 선택해 주세요." };
+async function assertLeaderIsFree(userId: string, exceptGroupId?: string) {
+  const currentGroups = await listGroups();
+  const other = currentGroups.find((group) => group.id !== exceptGroupId && group.currentLeaderId === userId);
+  if (!other) return { ok: true as const };
+  return { ok: false as const, error: `이 사람은 이미 ${other.name} 가장입니다.` };
+}
 
-  const term = await getCurrentTerm();
-  const result = await appointOfficer(term.year, userId, title as OfficerTitle);
-  if (result !== "ok") return { ok: false as const, error: officerSeatError(result) };
-
+export async function linkMemberAccount(formData: FormData) {
+  if (!(await requireAppManager())) return { ok: false as const, error: "권한이 없습니다." };
+  const memberId = String(formData.get("memberId") ?? "").trim();
+  const userId = String(formData.get("userId") ?? "").trim();
+  const linked = await linkMemberToLeader(memberId, userId);
+  if (!linked.ok) return linked;
+  revalidatePath("/admin/members");
   revalidatePath("/admin/handover");
   revalidatePath("/groups");
   return { ok: true as const };
 }
 
-export async function createOfficerAction(formData: FormData) {
+export async function appointLeaderFromMember(formData: FormData) {
+  if (!(await requireAppManager())) return { ok: false as const, error: "권한이 없습니다." };
+  const groupId = String(formData.get("groupId") ?? "").trim();
+  const group = await getGroupById(groupId);
+  if (!group) return { ok: false as const, error: "가족을 찾을 수 없습니다." };
+
+  const resolved = await resolveLeaderForMember(formData);
+  if (!resolved.ok) return resolved;
+  const free = await assertLeaderIsFree(resolved.user.id, groupId);
+  if (!free.ok) return free;
+
+  await handoverGroupLeader(groupId, resolved.user.id);
+  await assignMemberToGroupStore(resolved.member.id, groupId);
+  revalidatePath("/admin/handover");
+  revalidatePath("/admin/members");
+  revalidatePath("/groups");
+  revalidatePath(`/groups/${groupId}`);
+  return { ok: true as const };
+}
+
+export async function createGroupFromMember(formData: FormData) {
+  if (!(await requireAppManager())) return { ok: false as const, error: "권한이 없습니다." };
+  const trimmed = String(formData.get("name") ?? "").trim();
+  if (!trimmed) return { ok: false as const, error: "가족 이름을 입력해 주세요." };
+
+  const resolved = await resolveLeaderForMember(formData);
+  if (!resolved.ok) return resolved;
+  const free = await assertLeaderIsFree(resolved.user.id);
+  if (!free.ok) return free;
+
+  const group = await createGroupStore(trimmed);
+  await handoverGroupLeader(group.id, resolved.user.id);
+  await assignMemberToGroupStore(resolved.member.id, group.id);
+  revalidatePath("/groups");
+  revalidatePath("/dashboard");
+  revalidatePath("/admin/handover");
+  revalidatePath("/admin/members");
+  return { ok: true as const };
+}
+
+export async function appointOfficerFromMember(formData: FormData) {
   if (!(await requirePastor())) return { ok: false as const, error: "임원 직책은 목사만 지정할 수 있습니다." };
   const title = String(formData.get("title") ?? "");
   if (!OFFICER_TITLES.includes(title as OfficerTitle)) return { ok: false as const, error: "잘못된 직책입니다." };
 
+  const resolved = await resolveLeaderForMember(formData);
+  if (!resolved.ok) return resolved;
+
   const term = await getCurrentTerm();
-  const active = await listActiveOfficers(term.year);
-  if (active.some((appointment) => appointment.title === title)) {
-    return { ok: false as const, error: "이미 맡은 사람이 있습니다. 비운 뒤에 지정해 주세요." };
-  }
-
-  const created = await createLeaderAccount(formData);
-  if (!created.ok) return created;
-
-  const result = await appointOfficer(term.year, created.user.id, title as OfficerTitle);
+  const result = await appointOfficer(term.year, resolved.user.id, title as OfficerTitle);
   if (result !== "ok") return { ok: false as const, error: officerSeatError(result) };
 
   revalidatePath("/admin/handover");
+  revalidatePath("/admin/members");
   revalidatePath("/groups");
   return { ok: true as const };
 }
@@ -354,15 +426,6 @@ export async function vacateOfficerAction(formData: FormData) {
   await vacateOfficer(term.year, title as OfficerTitle);
   revalidatePath("/admin/handover");
   revalidatePath("/groups");
-  return { ok: true as const };
-}
-
-export async function createLeaderAction(formData: FormData) {
-  if (!(await requireAppManager())) return { ok: false as const, error: "권한이 없습니다." };
-  const created = await createLeaderAccount(formData);
-  if (!created.ok) return created;
-  revalidatePath("/groups");
-  revalidatePath("/admin/handover");
   return { ok: true as const };
 }
 
@@ -557,25 +620,6 @@ export async function assignGroupSeating(serviceId: string, groupId: string, zon
   return { ok: true };
 }
 
-export async function createGroup(name: string, leaderId: string) {
-  if (!(await requireAppManager())) return { error: "권한이 없습니다." };
-
-  const trimmed = name.trim();
-  if (!trimmed) return { error: "가족 이름을 입력해 주세요." };
-
-  const leader = await getUserById(leaderId);
-  if (!leader || leader.role !== "LEADER") {
-    return { error: "가장은 리더 역할 사용자여야 합니다." };
-  }
-
-  const group = await createGroupStore(trimmed);
-  await handoverGroupLeader(group.id, leader.id);
-  revalidatePath("/groups");
-  revalidatePath("/dashboard");
-  revalidatePath("/admin/handover");
-  return { ok: true };
-}
-
 export async function assignMemberToGroup(memberId: string, groupId: string) {
   if (!(await requireAppManager())) return { error: "권한이 없습니다." };
   await assignMemberToGroupStore(memberId, groupId);
@@ -635,11 +679,6 @@ export async function importGroupMembers(formData: FormData) {
   revalidatePath("/groups");
   revalidatePath("/admin/members");
   return { ok: true as const, added, skipped };
-}
-
-export async function setGroupLeader(groupId: string, leaderId: string) {
-  if (!(await requireAppManager())) return { error: "권한이 없습니다." };
-  return handoverLeader(groupId, leaderId);
 }
 
 /** 임원·목사가 비정기 출석체크를 연다. 매주 주일 출석은 여기서 만들지 않는다. */

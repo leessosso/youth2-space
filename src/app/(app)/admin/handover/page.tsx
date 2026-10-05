@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { handoverLeader, startNextFamilyTerm } from "@/app/actions";
+import { appointLeaderFromMember, startNextFamilyTerm } from "@/app/actions";
+import { AppointMemberForm } from "@/components/member-account-form";
 import { OfficerYearBoard } from "@/components/officer-year-board";
-import { Button, Card, CardHeader, Label } from "@/components/ui";
+import { Button, Card, CardHeader } from "@/components/ui";
 import { currentUserCanManageApp, getCurrentUser } from "@/lib/auth";
 import { formatDateKo, termLabel } from "@/lib/format";
-import { listAllGroups, listGroups, listLeaderTermsByGroup } from "@/lib/store/groups";
+import { listAllGroups, listAllMembers, listGroups, listLeaderTermsByGroup } from "@/lib/store/groups";
 import { listActiveOfficers } from "@/lib/store/officers";
 import { getCurrentTerm } from "@/lib/store/settings";
 import { listUsersByRole } from "@/lib/store/users";
@@ -16,13 +17,24 @@ import { isPastorOrAdmin, OFFICER_TITLES } from "@/lib/types";
 export default async function HandoverPage() {
   if (!(await currentUserCanManageApp())) redirect("/dashboard");
 
-  const [term, groups, allGroups, leaders, actor] = await Promise.all([
+  const [term, groups, allGroups, leaders, members, actor] = await Promise.all([
     getCurrentTerm(),
     listGroups(),
     listAllGroups(),
     listUsersByRole("LEADER"),
+    listAllMembers(),
     getCurrentUser(),
   ]);
+  const memberChoices = members.map((member) => ({
+    id: member.id,
+    name: member.name,
+    phone: member.phone,
+    userId: member.userId,
+  }));
+  const linkedUserIds = new Set(memberChoices.flatMap((member) => (member.userId ? [member.userId] : [])));
+  const unlinkedLeaders = leaders
+    .filter((leader) => !linkedUserIds.has(leader.id))
+    .map((leader) => ({ id: leader.id, name: leader.name, email: leader.email, phone: leader.phone }));
   const appointments = await listActiveOfficers(term.year);
   const isPastor = actor ? isPastorOrAdmin(actor.role) : false;
   const upcoming = nextTerm(term);
@@ -95,12 +107,17 @@ export default async function HandoverPage() {
         year={term.year}
         half={term.half}
         seats={seats}
-        leaders={leaders.map((leader) => ({ id: leader.id, name: leader.name, email: leader.email }))}
+        members={memberChoices}
+        unlinkedLeaders={unlinkedLeaders}
         isPastor={isPastor}
       />
 
       <div>
-        <h3 className="mb-3 text-base font-semibold">{termLabel(term)} 가장 구성</h3>
+        <h3 className="mb-1 text-base font-semibold">{termLabel(term)} 가장 구성</h3>
+        <p className="mb-3 text-sm text-stone-600">
+          가장은 성도 명단에서 고릅니다. 계정이 없으면 여기서 만들거나, 전화번호가 같은 기존 계정과 연결합니다.
+          임명하면 그 성도는 이 가족 가족원이 됩니다.
+        </p>
         <div className="grid gap-6 lg:grid-cols-2">
         {groupsWithTerms.map(({ group: g, terms }) => (
           <Card key={g.id}>
@@ -109,31 +126,15 @@ export default async function HandoverPage() {
               subtitle={`현재 가장: ${(g.currentLeaderId && leaderNames.get(g.currentLeaderId)?.name) ?? "미배정"}`}
             />
             <div className="space-y-4 p-4 sm:p-5">
-              <form
-                action={async (fd) => {
-                  "use server";
-                  await handoverLeader(g.id, fd.get("leaderId") as string);
-                }}
-                className="flex flex-wrap items-end gap-3"
-              >
-                <div>
-                  <Label>이 학기 가장</Label>
-                  <select
-                    name="leaderId"
-                    className="mt-1 rounded-lg border border-stone-300 px-3 py-2 text-sm"
-                    required
-                    defaultValue=""
-                  >
-                    <option value="" disabled>선택</option>
-                    {leaders
-                      .filter((l) => l.id !== g.currentLeaderId)
-                      .map((l) => (
-                        <option key={l.id} value={l.id}>{l.name} ({l.email})</option>
-                      ))}
-                  </select>
-                </div>
-                <Button type="submit">가장 임명</Button>
-              </form>
+              <AppointMemberForm
+                members={memberChoices}
+                unlinkedLeaders={unlinkedLeaders}
+                excludeUserId={g.currentLeaderId}
+                hidden={{ groupId: g.id }}
+                action={appointLeaderFromMember}
+                submitLabel="가장 임명"
+                memberLabel="이 학기 가장"
+              />
               <div>
                 <p className="text-xs font-medium uppercase text-stone-500">이력</p>
                 <ul className="mt-2 space-y-1 text-sm text-stone-700">

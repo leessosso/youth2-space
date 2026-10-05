@@ -53,14 +53,29 @@ export async function listCurrentLeaderUserIds(): Promise<string[]> {
   return leaderIds.filter((id) => users.get(id)?.role === "LEADER");
 }
 
+function asMember(id: string, data: Partial<Omit<Member, "id">> | undefined): Member {
+  return {
+    id,
+    groupId: data?.groupId ?? "",
+    name: data?.name ?? "",
+    phone: data?.phone ?? null,
+    createdAt: data?.createdAt ?? "",
+    userId: data?.userId ?? null,
+  };
+}
+
 export async function listMembersByGroup(groupId: string): Promise<Member[]> {
   const snap = await membersCol.where("groupId", "==", groupId).get();
-  return snap.docs.map(withId).sort((a, b) => a.name.localeCompare(b.name, "ko"));
+  return snap.docs
+    .map((doc) => asMember(doc.id, doc.data()))
+    .sort((a, b) => a.name.localeCompare(b.name, "ko"));
 }
 
 export async function listAllMembers(): Promise<Member[]> {
   const snap = await membersCol.get();
-  return snap.docs.map(withId).sort((a, b) => a.name.localeCompare(b.name, "ko"));
+  return snap.docs
+    .map((doc) => asMember(doc.id, doc.data()))
+    .sort((a, b) => a.name.localeCompare(b.name, "ko"));
 }
 
 /** 이번 학기 가족에 속하지 않은 가족원 (새 학기 재배정용) */
@@ -73,7 +88,19 @@ export async function listUnassignedMembers(): Promise<Member[]> {
 export async function getMemberById(id: string): Promise<Member | null> {
   const doc = await membersCol.doc(id).get();
   if (!doc.exists) return null;
-  return { id: doc.id, ...doc.data()! };
+  return asMember(doc.id, doc.data());
+}
+
+export async function getMemberByUserId(userId: string): Promise<Member | null> {
+  if (!userId) return null;
+  const snap = await membersCol.where("userId", "==", userId).limit(1).get();
+  if (snap.empty) return null;
+  const doc = snap.docs[0];
+  return asMember(doc.id, doc.data());
+}
+
+export async function linkMemberUser(memberId: string, userId: string) {
+  await membersCol.doc(memberId).update({ userId });
 }
 
 export async function listLeaderTermsByGroup(groupId: string): Promise<GroupLeaderTerm[]> {
@@ -123,6 +150,7 @@ export async function createMember(
     groupId,
     name,
     phone: phone ?? null,
+    userId: null,
     createdAt: new Date().toISOString(),
   };
   await ref.set(member);

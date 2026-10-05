@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { createGroup, createLeaderAction } from "@/app/actions";
-import { AddLeaderForm } from "@/components/add-leader-form";
-import { Button, Card, CardHeader, Input, Label } from "@/components/ui";
+import { createGroupFromMember } from "@/app/actions";
+import { AppointMemberForm } from "@/components/member-account-form";
+import { Card, CardHeader, Input, Label } from "@/components/ui";
 import { currentUserCanManageApp } from "@/lib/auth";
 import { termLabel } from "@/lib/format";
 import { listAllMembers, listGroups, listUnassignedMembers } from "@/lib/store/groups";
@@ -21,13 +21,23 @@ export default async function GroupsPage() {
     canAdmin ? listActiveOfficers(term.year) : Promise.resolve([]),
   ]);
   const leaders = await getUsersByIds(groups.map((g) => g.currentLeaderId ?? "").filter(Boolean));
+  const memberChoices = members.map((member) => ({
+    id: member.id,
+    name: member.name,
+    phone: member.phone,
+    userId: member.userId,
+  }));
+  const linkedUserIds = new Set(memberChoices.flatMap((member) => (member.userId ? [member.userId] : [])));
+  const unlinkedLeaders = leaderUsers
+    .filter((leader) => !linkedUserIds.has(leader.id))
+    .map((leader) => ({ id: leader.id, name: leader.name, email: leader.email, phone: leader.phone }));
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold">가족</h2>
         <p className="text-sm text-stone-600">
-          {termLabel(term)} 구성입니다. 가족과 가장은 이 학기에 다시 정합니다.
+          {termLabel(term)} 구성입니다. 가족과 가장은 이 학기에 다시 정하고, 가장은 성도 명단에서 고릅니다.
         </p>
       </div>
 
@@ -45,47 +55,24 @@ export default async function GroupsPage() {
 
       {canAdmin && (
         <Card className="p-4 sm:p-5">
-          <AddLeaderForm action={createLeaderAction} />
-        </Card>
-      )}
-
-      {canAdmin && (
-        <Card className="p-4 sm:p-5">
           <h3 className="font-medium text-stone-900">이 학기 가족 추가</h3>
-          <form
-            action={async (fd) => {
-              "use server";
-              await createGroup(fd.get("name") as string, fd.get("leaderId") as string);
-            }}
-            className="mt-3 grid gap-3 sm:grid-cols-2"
-          >
-            <div>
-              <Label>가족 이름</Label>
-              <Input name="name" required placeholder="4가족" />
-            </div>
-            <div>
-              <Label>가장</Label>
-              <select
-                name="leaderId"
-                required
-                defaultValue=""
-                className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-500"
-              >
-                <option value="" disabled>
-                  가장 선택
-                </option>
-                {leaderUsers.map((leader) => (
-                  <option key={leader.id} value={leader.id}>
-                    {leader.name}
-                    {leader.officerTitle ? ` · ${leader.officerTitle}` : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="sm:col-span-2">
-              <Button type="submit">추가</Button>
-            </div>
-          </form>
+          <p className="mt-1 text-sm text-stone-600">
+            가장은 성도 명단에서 고릅니다. 계정이 없으면 여기서 만들거나 기존 계정과 연결하고, 그 성도를 이 가족 가족원으로 넣습니다.
+          </p>
+          <div className="mt-3">
+            <AppointMemberForm
+              members={memberChoices}
+              unlinkedLeaders={unlinkedLeaders}
+              action={createGroupFromMember}
+              submitLabel="추가"
+              memberLabel="가장"
+            >
+              <div>
+                <Label>가족 이름</Label>
+                <Input name="name" required placeholder="4가족" />
+              </div>
+            </AppointMemberForm>
+          </div>
         </Card>
       )}
 

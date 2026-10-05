@@ -43,6 +43,15 @@ export default async function GroupDetailPage({
         <p className="text-sm text-stone-600">
           {termLabel({ year: group.year, half: group.half })} · 가장: {currentLeaderName ?? "미배정"}
         </p>
+        {canAdmin && group.currentLeaderId && !members.some((member) => member.userId === group.currentLeaderId) && (
+          <p className="mt-2 text-sm text-stone-600">
+            이 가장은 성도 명단과 연결되어 있지 않습니다.{" "}
+            <Link href="/admin/members" className="font-medium text-stone-900 underline">
+              성도 명단
+            </Link>
+            에서 연결해 주세요.
+          </p>
+        )}
       </div>
 
       <div className="grid items-start gap-6 lg:grid-cols-2">
@@ -52,6 +61,9 @@ export default async function GroupDetailPage({
           {members.map((m) => (
             <li key={m.id} className="px-4 py-3 font-medium sm:px-5">
               {m.name}
+              {m.userId && m.userId === group.currentLeaderId && (
+                <span className="ml-2 text-xs font-normal text-stone-500">가장</span>
+              )}
             </li>
           ))}
           {members.length === 0 && (

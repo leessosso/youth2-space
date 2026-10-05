@@ -61,6 +61,7 @@ async function main() {
 
   await getDb().collection("settings").doc("app").set({ year: 2026, half: "H1" });
 
+  const officerUsers: { userId: string; name: string; phone: string }[] = [];
   const officers = [
     { title: "회장", name: "임범석", email: "imbeomseok@test.church", phone: "01020000001" },
     { title: "부회장", name: "김광림", email: "kimgwangrim@test.church", phone: "01020000002" },
@@ -86,6 +87,22 @@ async function main() {
       startedAt: now,
       endedAt: null,
     });
+    officerUsers.push({ userId, name: officer.name, phone: officer.phone });
+  }
+
+  async function addMember(name: string, phone: string, groupId: string, userId: string) {
+    const ref = getDb().collection("members").doc();
+    await ref.set({
+      groupId,
+      name,
+      phone: phone.replace(/\D/g, ""),
+      userId,
+      createdAt: now,
+    });
+  }
+
+  for (const officer of officerUsers) {
+    await addMember(officer.name, officer.phone, "", officer.userId);
   }
 
   const householdHeads = [
@@ -114,16 +131,17 @@ async function main() {
     ["이필홍", "leephilhong@test.church", "필홍이네"],
     ["한성민", "hanseongmin@test.church", "성민이네"],
   ] as const;
-  const householdHeadIds: { userId: string; familyName: string }[] = [];
+  const householdHeadIds: { userId: string; familyName: string; name: string; phone: string }[] = [];
   let householdPhoneSeq = 30000001;
   for (const [name, email, familyName] of householdHeads) {
+    const phone = `010${householdPhoneSeq++}`;
     const userId = await addUser({
       email,
       name,
-      phone: `010${householdPhoneSeq++}`,
+      phone,
       role: "LEADER",
     });
-    householdHeadIds.push({ userId, familyName });
+    householdHeadIds.push({ userId, familyName, name, phone });
   }
 
   async function addGroup(name: string, description: string, currentLeaderId: string, year: number, half: "H1" | "H2") {
@@ -136,8 +154,9 @@ async function main() {
 
   const termStart = "2025-01-01T00:00:00.000Z";
 
-  for (const { userId, familyName } of householdHeadIds) {
+  for (const { userId, familyName, name, phone } of householdHeadIds) {
     const groupId = await addGroup(familyName, "", userId, 2026, "H1");
+    await addMember(name, phone, groupId, userId);
     await getDb().collection("groupLeaderTerms").doc().set({
       groupId,
       leaderId: userId,

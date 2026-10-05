@@ -64,13 +64,15 @@ export type Group = {
   half: "H1" | "H2";
 };
 
-/** 가족원 (구 "조원") */
+/** 가족원 (구 "조원"). 가장·임원도 성도 한 명이며, 앱 계정은 `userId`로 연결한다. */
 export type Member = {
   id: string;
   groupId: string;
   name: string;
   phone: string | null;
   createdAt: string;
+  /** 로그인 계정. 가장·임원만 연결되고, 계정이 없는 성도는 null. */
+  userId: string | null;
 };
 
 /** 가장 임기. 원칙적으로 상반기·하반기 각 1회. */
