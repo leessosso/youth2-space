@@ -18,7 +18,7 @@ firebase.initializeApp(${configJson});
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title || payload.data?.title || '2청년회 운영';
+  const title = payload.notification?.title || payload.data?.title || '2청년회';
   const body = payload.notification?.body || payload.data?.body || '';
   const url = payload.fcmOptions?.link || payload.data?.url || '/dashboard';
   const tag = payload.notification?.tag || payload.data?.tag;
