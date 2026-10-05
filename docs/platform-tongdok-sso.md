@@ -31,6 +31,14 @@
 - 라우트 `preferredRegion = icn1` (서울). Firestore `(default)`는 `asia-northeast3`.
 - `api/platform/*`는 미들웨어 matcher에서 제외 — 라우트가 자체로 세션·비밀번호 변경을 검사한다.
 
+### Server-Timing · 구조화 로그
+
+`training-sso`와 동일: `Server-Timing` + `msg=platform_sso_timing` JSON. 메트릭 `auth` / `subject`|`firestore` / `sign` / `source` / `total`. 티켓 JWT는 기록하지 않는다.
+
+### Hop (rewrite) 단축 여부
+
+Location은 same-origin `/tongdok/sso/consume`을 유지한다. `TONGDOK_ORIGIN` 절대 URL 리다이렉트는 same-domain 쿠키·세션과 충돌할 수 있어, 통독 앱 consume이 shell 호스트 쿠키를 보장하기 전에는 적용하지 않는다.
+
 ## 티켓 (JWT, HS256)
 
 | 클레임 | 값 |
