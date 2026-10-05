@@ -1,7 +1,7 @@
 {
-  "name": "2청년회 운영",
-  "short_name": "2청년회 운영",
-  "description": "리더모임·돌봄카드·출석 등 2청년회 운영 도구",
+  "name": "2청년회 통합 플랫폼",
+  "short_name": "2청년회",
+  "description": "리더모임·돌봄카드·출석 등 2청년회 도구",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",

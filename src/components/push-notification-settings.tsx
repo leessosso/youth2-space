@@ -197,7 +197,7 @@ export function PushNotificationSettings({
           )}
         </div>
         <p className="text-xs text-stone-500">
-          iOS Safari는 홈 화면에 「2청년회 운영」을 추가한 PWA에서만 웹 푸시가 동작합니다.
+          iOS Safari는 홈 화면에 「2청년회」을 추가한 PWA에서만 웹 푸시가 동작합니다.
         </p>
       </div>
     </Card>
