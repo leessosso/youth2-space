@@ -1,25 +1,23 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createMember, importGroupMembers, linkMemberAccount } from "@/app/actions";
-import { UnlinkedLeaderLinks } from "@/components/member-account-form";
+import { createMember, importGroupMembers } from "@/app/actions";
 import { MemberBulkImport } from "@/components/member-bulk-import";
-import { Badge, Button, Card, CardHeader, Input, Label } from "@/components/ui";
+import { MemberRosterLists } from "@/components/member-roster-lists";
+import { Button, Card, CardHeader, Input, Label } from "@/components/ui";
 import { currentUserCanManageApp } from "@/lib/auth";
 import { termLabel } from "@/lib/format";
-import { listAllMembers, listGroups, listUnassignedMembers } from "@/lib/store/groups";
+import { listAllMembers, listGroups } from "@/lib/store/groups";
 import { listActiveOfficers } from "@/lib/store/officers";
 import { getCurrentTerm } from "@/lib/store/settings";
 import { getUsersByIds, listUsersByRole } from "@/lib/store/users";
-import type { Member } from "@/lib/types";
 
 export default async function MemberRosterPage() {
   if (!(await currentUserCanManageApp())) redirect("/dashboard");
 
-  const [term, groups, members, unassigned, leaders] = await Promise.all([
+  const [term, groups, members, leaders] = await Promise.all([
     getCurrentTerm(),
     listGroups(),
     listAllMembers(),
-    listUnassignedMembers(),
     listUsersByRole("LEADER"),
   ]);
   const [appointments, leaderNames] = await Promise.all([
@@ -40,16 +38,6 @@ export default async function MemberRosterPage() {
     .filter((leader) => !linkedUserIds.has(leader.id))
     .map((leader) => ({ id: leader.id, name: leader.name, email: leader.email, phone: leader.phone }));
 
-  function memberBadges(member: Member) {
-    const title = member.userId ? officerTitleByUser.get(member.userId) : undefined;
-    return (
-      <span className="flex flex-wrap items-center gap-1">
-        {member.userId && <Badge>계정</Badge>}
-        {member.userId && leaderIds.has(member.userId) && <Badge tone="green">가장</Badge>}
-        {title && <Badge tone="blue">{title}</Badge>}
-      </span>
-    );
-  }
   const families = groups.map((group) => {
     const leaderName = group.currentLeaderId ? leaderNames.get(group.currentLeaderId)?.name : undefined;
     const count = members.filter((member) => member.groupId === group.id).length;
@@ -107,52 +95,20 @@ export default async function MemberRosterPage() {
         </Card>
       </div>
 
-      {unlinkedLeaders.length > 0 && (
-        <Card>
-          <CardHeader
-            title={`성도와 연결되지 않은 계정 ${unlinkedLeaders.length}명`}
-            subtitle="가장·임원으로 쓰려면 성도 한 명과 연결합니다. 전화번호가 같은 성도는 목록 위에 표시됩니다."
-          />
-          <UnlinkedLeaderLinks leaders={unlinkedLeaders} members={memberChoices} action={linkMemberAccount} />
-        </Card>
-      )}
-
-      <Card>
-        <CardHeader
-          title={`아직 가족이 없는 사람 ${unassigned.length}명`}
-          subtitle="가족 화면에서 이번 학기 가족으로 옮깁니다"
-        />
-        <ul className="divide-y divide-stone-100 text-sm">
-          {unassigned.map((member) => (
-            <li key={member.id} className="flex items-center justify-between gap-3 px-4 py-2 sm:px-5">
-              <span className="font-medium text-stone-900">{member.name}</span>
-              <span className="flex items-center gap-2">
-                {member.phone && <span className="text-stone-500">{member.phone}</span>}
-                {memberBadges(member)}
-              </span>
-            </li>
-          ))}
-          {unassigned.length === 0 && (
-            <li className="px-4 py-6 text-stone-500 sm:px-5">아직 없습니다.</li>
-          )}
-        </ul>
-      </Card>
-
-      <Card>
-        <CardHeader title={`전체 성도 ${members.length}명`} subtitle="계정, 이번 학기 가장, 올해 임원" />
-        <ul className="divide-y divide-stone-100 text-sm">
-          {members.map((member) => (
-            <li key={member.id} className="flex items-center justify-between gap-3 px-4 py-2 sm:px-5">
-              <span>
-                <span className="font-medium text-stone-900">{member.name}</span>
-                <span className="text-stone-500"> · {groupNameById.get(member.groupId) ?? "미배정"}</span>
-              </span>
-              {memberBadges(member)}
-            </li>
-          ))}
-          {members.length === 0 && <li className="px-4 py-6 text-stone-500 sm:px-5">아직 없습니다.</li>}
-        </ul>
-      </Card>
+      <MemberRosterLists
+        members={members.map((member) => ({
+          id: member.id,
+          name: member.name,
+          phone: member.phone,
+          userId: member.userId,
+          groupId: member.groupId,
+        }))}
+        unlinkedLeaders={unlinkedLeaders}
+        currentGroupIds={groups.map((group) => group.id)}
+        leaderIds={[...leaderIds]}
+        officerTitles={Object.fromEntries(officerTitleByUser)}
+        groupNames={Object.fromEntries(groupNameById)}
+      />
 
       {families.length > 0 && (
         <Card>
@@ -160,7 +116,11 @@ export default async function MemberRosterPage() {
           <ul className="divide-y divide-stone-100 text-sm">
             {families.map((family) => (
               <li key={family.id}>
-                <Link href={`/groups/${family.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-stone-50 sm:px-5">
+                <Link
+                  href={`/groups/${family.id}`}
+                  prefetch={false}
+                  className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-stone-50 sm:px-5"
+                >
                   <span>
                     <span className="font-medium text-stone-900">{family.name}</span>
                     <span className="text-stone-500"> · 가장 {family.leaderName}</span>

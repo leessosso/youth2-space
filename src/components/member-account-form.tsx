@@ -208,10 +208,12 @@ export function UnlinkedLeaderLinks({
   leaders,
   members,
   action,
+  onLinked,
 }: {
   leaders: UnlinkedLeaderChoice[];
   members: MemberChoice[];
   action: (formData: FormData) => Promise<ActionResult>;
+  onLinked?: (userId: string, memberId: string) => void;
 }) {
   const openMembers = members.filter((member) => !member.userId);
   if (leaders.length === 0) return null;
@@ -219,7 +221,13 @@ export function UnlinkedLeaderLinks({
   return (
     <ul className="divide-y divide-stone-100">
       {leaders.map((leader) => (
-        <LeaderLinkRow key={leader.id} leader={leader} members={openMembers} action={action} />
+        <LeaderLinkRow
+          key={leader.id}
+          leader={leader}
+          members={openMembers}
+          action={action}
+          onLinked={onLinked}
+        />
       ))}
     </ul>
   );
@@ -348,10 +356,12 @@ function LeaderLinkRow({
   leader,
   members,
   action,
+  onLinked,
 }: {
   leader: UnlinkedLeaderChoice;
   members: MemberChoice[];
   action: (formData: FormData) => Promise<ActionResult>;
+  onLinked?: (userId: string, memberId: string) => void;
 }) {
   const [memberId, setMemberId] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -378,7 +388,11 @@ function LeaderLinkRow({
             }
             startTransition(async () => {
               const result = await action(formData);
-              if (!result.ok) setError(result.error);
+              if (!result.ok) {
+                setError(result.error);
+                return;
+              }
+              onLinked?.(leader.id, String(formData.get("memberId") ?? ""));
             });
           }}
           className="flex flex-wrap items-end gap-2"

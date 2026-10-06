@@ -1,9 +1,10 @@
+import { cache } from "react";
 import { settingsCol } from "@/lib/store/collections";
 import { termFromDate, type Term } from "@/lib/term";
 
 const APP_ID = "app";
 
-export async function getCurrentTerm(): Promise<Term> {
+export const getCurrentTerm = cache(async (): Promise<Term> => {
   const doc = await settingsCol.doc(APP_ID).get();
   if (doc.exists) {
     const data = doc.data();
@@ -14,7 +15,7 @@ export async function getCurrentTerm(): Promise<Term> {
   const fallback = termFromDate();
   await settingsCol.doc(APP_ID).set(fallback);
   return fallback;
-}
+});
 
 export async function setCurrentTerm(term: Term) {
   await settingsCol.doc(APP_ID).set(term);

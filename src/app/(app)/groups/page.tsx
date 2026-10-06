@@ -4,7 +4,7 @@ import { AppointMemberForm } from "@/components/member-account-form";
 import { Card, CardHeader, Input, Label } from "@/components/ui";
 import { currentUserCanManageApp } from "@/lib/auth";
 import { termLabel } from "@/lib/format";
-import { listAllMembers, listGroups, listUnassignedMembers } from "@/lib/store/groups";
+import { listAllMembers, listGroups } from "@/lib/store/groups";
 import { listActiveOfficers } from "@/lib/store/officers";
 import { getCurrentTerm } from "@/lib/store/settings";
 import { getUsersByIds, listUsersByRole } from "@/lib/store/users";
@@ -13,13 +13,14 @@ export default async function GroupsPage() {
   const canAdmin = await currentUserCanManageApp();
 
   const term = await getCurrentTerm();
-  const [groups, unassigned, members, leaderUsers, officers] = await Promise.all([
+  const [groups, members, leaderUsers, officers] = await Promise.all([
     listGroups(),
-    canAdmin ? listUnassignedMembers() : Promise.resolve([]),
     listAllMembers(),
     canAdmin ? listUsersByRole("LEADER") : Promise.resolve([]),
     canAdmin ? listActiveOfficers(term.year) : Promise.resolve([]),
   ]);
+  const currentGroupIds = new Set(groups.map((group) => group.id));
+  const unassigned = canAdmin ? members.filter((member) => !currentGroupIds.has(member.groupId)) : [];
   const leaders = await getUsersByIds(groups.map((g) => g.currentLeaderId ?? "").filter(Boolean));
   const memberChoices = members.map((member) => ({
     id: member.id,
@@ -95,6 +96,7 @@ export default async function GroupsPage() {
           <Link
             key={g.id}
             href={`/groups/${g.id}`}
+            prefetch={false}
             className="block h-full rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
           >
             <Card className="h-full transition hover:border-stone-300 hover:bg-stone-50">

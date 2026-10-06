@@ -1,3 +1,4 @@
+import { cache } from "react";
 import {
   groupLeaderTermsCol,
   groupsCol,
@@ -13,14 +14,14 @@ function groupTerm(group: Group): Term {
   return { year: group.year, half: group.half };
 }
 
-export async function listAllGroups(): Promise<Group[]> {
+export const listAllGroups = cache(async (): Promise<Group[]> => {
   const snap = await groupsCol.get();
   return snap.docs.map(withId).sort((a, b) => {
     if (a.year !== b.year) return b.year - a.year;
     if (a.half !== b.half) return a.half === "H2" ? -1 : 1;
     return a.name.localeCompare(b.name, "ko");
   });
-}
+});
 
 /** 현재 상/하반기에 구성된 가족만 */
 export async function listGroups(): Promise<Group[]> {
@@ -71,19 +72,12 @@ export async function listMembersByGroup(groupId: string): Promise<Member[]> {
     .sort((a, b) => a.name.localeCompare(b.name, "ko"));
 }
 
-export async function listAllMembers(): Promise<Member[]> {
+export const listAllMembers = cache(async (): Promise<Member[]> => {
   const snap = await membersCol.get();
   return snap.docs
     .map((doc) => asMember(doc.id, doc.data()))
     .sort((a, b) => a.name.localeCompare(b.name, "ko"));
-}
-
-/** 이번 학기 가족에 속하지 않은 가족원 (새 학기 재배정용) */
-export async function listUnassignedMembers(): Promise<Member[]> {
-  const current = await listGroups();
-  const ids = new Set(current.map((g) => g.id));
-  return (await listAllMembers()).filter((m) => !ids.has(m.groupId));
-}
+});
 
 export async function getMemberById(id: string): Promise<Member | null> {
   const doc = await membersCol.doc(id).get();

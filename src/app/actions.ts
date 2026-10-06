@@ -354,9 +354,7 @@ export async function linkMemberAccount(formData: FormData) {
   const userId = String(formData.get("userId") ?? "").trim();
   const linked = await linkMemberToLeader(memberId, userId);
   if (!linked.ok) return linked;
-  revalidatePath("/admin/members");
-  revalidatePath("/admin/handover");
-  revalidatePath("/groups");
+  // 경로를 갱신하면 성도 명단이 통째로 다시 읽힌다. 목록은 화면에서만 고친다.
   return { ok: true as const };
 }
 
