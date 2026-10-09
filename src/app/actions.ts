@@ -52,6 +52,7 @@ import {
   setMeetingDutyUser,
   setMeetingPrayerLeader,
   updateMeetingNotes as updateMeetingNotesStore,
+  updateMeetingScripture as updateMeetingScriptureStore,
 } from "@/lib/store/meetings";
 import { sendFamilyMessage } from "@/lib/store/reports";
 import { assignGroupSeating as assignGroupSeatingStore, createWorshipService as createWorshipServiceStore } from "@/lib/store/worship";
@@ -493,6 +494,17 @@ export async function updateMeetingNotes(meetingId: string, notes: string) {
   const { error } = await requireAnnouncementManager();
   if (error) return { error };
   await updateMeetingNotesStore(meetingId, notes);
+  revalidatePath(`/meetings/${meetingId}`);
+  return { ok: true };
+}
+
+export async function updateMeetingScripture(
+  meetingId: string,
+  reference: string,
+  body: string,
+) {
+  if (!(await requireAppManager())) return { error: "권한이 없습니다." };
+  await updateMeetingScriptureStore(meetingId, { reference, body });
   revalidatePath(`/meetings/${meetingId}`);
   return { ok: true };
 }

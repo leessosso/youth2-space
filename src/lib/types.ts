@@ -103,6 +103,12 @@ export type MeetingAsset = {
   publishedById?: string | null;
 };
 
+/** 리더모임 말씀 교안에서 함께 읽는 본문. */
+export type MeetingScripture = {
+  reference: string;
+  body: string;
+};
+
 /** 리더모임 (구 LeaderMeeting) */
 export type LeaderMeeting = {
   id: string;
@@ -112,6 +118,8 @@ export type LeaderMeeting = {
   prayerLeaderId: string | null;
   /** 이번 모임 섬김 담당 (userId). `prayer_meeting_lead`는 `prayerLeaderId`와 동기화. */
   dutyUserIds?: Partial<Record<ServingDutyKey, string | null>>;
+  /** 비어 있는 문자열이면 의도적으로 비운 본문. 필드가 없으면 주차별 기본 본문을 볼 수 있다. */
+  scripture?: MeetingScripture | null;
   createdAt: string;
 };
 

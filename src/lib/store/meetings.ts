@@ -45,6 +45,18 @@ export async function updateMeetingNotes(meetingId: string, notes: string) {
   await leaderMeetingsCol.doc(meetingId).update({ notes });
 }
 
+export async function updateMeetingScripture(
+  meetingId: string,
+  scripture: { reference: string; body: string },
+) {
+  await leaderMeetingsCol.doc(meetingId).update({
+    scripture: {
+      reference: scripture.reference.trim(),
+      body: scripture.body.trim(),
+    },
+  });
+}
+
 export async function setMeetingPrayerLeader(meetingId: string, prayerLeaderId: string | null) {
   const result = await setMeetingDutyUser(meetingId, "prayer_meeting_lead", prayerLeaderId);
   return result;

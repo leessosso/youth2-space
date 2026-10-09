@@ -7,8 +7,10 @@ import {
 } from "@/app/actions";
 import { MeetingAssetList } from "@/components/meeting-asset-list";
 import { MeetingFileUpload } from "@/components/meeting-file-upload";
+import { MeetingScriptureBlock } from "@/components/meeting-scripture";
 import { Button, Card, CardHeader, Textarea } from "@/components/ui";
 import { canViewMeetingAsset } from "@/lib/meeting-assets";
+import { resolveMeetingScripture } from "@/lib/meeting-scripture";
 import { getCurrentUser } from "@/lib/auth";
 import { formatDateTimeKo } from "@/lib/format";
 import { listCurrentLeaderUserIds } from "@/lib/store/groups";
@@ -119,9 +121,14 @@ export default async function MeetingDetailPage({
       <Card>
         <CardHeader
           title="2. 말씀 교안 나눔"
-          subtitle="배정모자로 가장·임원·게스트(부가장·사역팀장) 조를 짠 뒤, 이번 주 교안으로 나눕니다."
+          subtitle="이번 주 본문을 함께 읽고, 배정모자로 조를 짠 뒤 교안으로 나눕니다."
         />
         <div className="space-y-4 p-4 sm:p-5">
+          <MeetingScriptureBlock
+            meetingId={id}
+            scripture={resolveMeetingScripture(meeting)}
+            canEdit={canAdmin}
+          />
           <MeetingAssetList
             meetingId={id}
             assets={lessonAssets}
