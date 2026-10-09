@@ -45,15 +45,9 @@ export async function updateMeetingNotes(meetingId: string, notes: string) {
   await leaderMeetingsCol.doc(meetingId).update({ notes });
 }
 
-export async function updateMeetingScripture(
-  meetingId: string,
-  scripture: { reference: string; body: string },
-) {
+export async function updateMeetingScripture(meetingId: string, scripture: string) {
   await leaderMeetingsCol.doc(meetingId).update({
-    scripture: {
-      reference: scripture.reference.trim(),
-      body: scripture.body.trim(),
-    },
+    scripture: scripture.trim(),
   });
 }
 

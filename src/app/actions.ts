@@ -498,13 +498,9 @@ export async function updateMeetingNotes(meetingId: string, notes: string) {
   return { ok: true };
 }
 
-export async function updateMeetingScripture(
-  meetingId: string,
-  reference: string,
-  body: string,
-) {
+export async function updateMeetingScripture(meetingId: string, scripture: string) {
   if (!(await requireAppManager())) return { error: "권한이 없습니다." };
-  await updateMeetingScriptureStore(meetingId, { reference, body });
+  await updateMeetingScriptureStore(meetingId, scripture);
   revalidatePath(`/meetings/${meetingId}`);
   return { ok: true };
 }
