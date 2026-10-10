@@ -49,7 +49,7 @@ export default async function SurveyGroupPage({
       </div>
 
       {readOnly && (
-        <Card className="border-stone-200 bg-stone-50 p-4 text-sm text-stone-600">
+        <Card padding="md" tone="muted">
           이 조사는 마감되었습니다. 목사에게 문의해 주세요.
         </Card>
       )}
@@ -65,14 +65,14 @@ export default async function SurveyGroupPage({
           <div className="overflow-x-auto">
             <table className="w-full min-w-[480px] text-sm">
               <thead>
-                <tr className="border-b border-stone-100 text-left text-stone-500">
+                <tr className="border-b border-muted text-left text-muted-foreground">
                   <th className="px-4 py-2 sm:px-5">이름</th>
                   {survey.questions.map((q) => (
                     <th key={q.id} className="px-2 py-2">{q.label}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-100">
+              <tbody className="divide-y divide-muted">
                 {members.map((m) => {
                   const response = responses.get(m.id);
                   return (
@@ -103,7 +103,7 @@ export default async function SurveyGroupPage({
                                 name={`${q.id}_${m.id}`}
                                 defaultValue={typeof answer === "number" ? answer : ""}
                                 disabled={readOnly}
-                                className="w-20 rounded-lg border border-stone-300 px-2 py-1 text-sm"
+                                className="w-20 rounded-lg border border-input px-2 py-1 text-sm"
                               />
                             </td>
                           );
@@ -115,7 +115,7 @@ export default async function SurveyGroupPage({
                               name={`${q.id}_${m.id}`}
                               defaultValue={typeof answer === "string" ? answer : ""}
                               disabled={readOnly}
-                              className="w-32 rounded-lg border border-stone-300 px-2 py-1 text-sm"
+                              className="w-32 rounded-lg border border-input px-2 py-1 text-sm"
                             />
                           </td>
                         );
@@ -125,7 +125,7 @@ export default async function SurveyGroupPage({
                 })}
                 {members.length === 0 && (
                   <tr>
-                    <td colSpan={1 + survey.questions.length} className="px-4 py-6 text-center text-stone-500">
+                    <td colSpan={1 + survey.questions.length} className="px-4 py-6 text-center text-muted-foreground">
                       가족원이 없습니다.
                     </td>
                   </tr>
@@ -134,7 +134,7 @@ export default async function SurveyGroupPage({
             </table>
           </div>
           {members.length > 0 && !readOnly && (
-            <div className="border-t border-stone-100 p-4 sm:p-5">
+            <div className="border-t border-muted p-4 sm:p-5">
               <Button type="submit">저장</Button>
             </div>
           )}

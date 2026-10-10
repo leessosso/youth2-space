@@ -23,7 +23,7 @@ function isActive(pathname: string, href: string) {
 }
 
 const linkBase = "block rounded-lg px-3 py-2.5 text-sm transition-colors";
-const linkInactive = "text-stone-700 hover:bg-stone-100";
+const linkInactive = "text-stone-700 hover:bg-muted";
 const linkActive = "bg-primary/10 font-medium text-primary";
 
 export function AppNavDrawer({
@@ -47,7 +47,7 @@ export function AppNavDrawer({
           type="button"
           variant="ghost"
           size="icon"
-          className="shrink-0 text-foreground"
+          className="shrink-0"
           aria-label={open ? "메뉴 닫기" : "메뉴 열기"}
         >
           {open ? <XIcon className="size-6" /> : <MenuIcon className="size-6" />}
@@ -56,16 +56,16 @@ export function AppNavDrawer({
       <SheetContent
         side="right"
         showCloseButton={false}
-        className="w-[min(100%,20rem)] gap-0 bg-surface p-0 sm:max-w-xs lg:hidden"
+        flush
+        className="w-[min(100%,20rem)] sm:max-w-xs lg:hidden"
       >
-        <SheetHeader className="flex-row items-center justify-between space-y-0 border-b border-border px-4 py-3">
-          <SheetTitle className="text-base font-semibold">메뉴</SheetTitle>
+        <SheetHeader variant="bar">
+          <SheetTitle>메뉴</SheetTitle>
           <SheetClose asChild>
             <Button
               type="button"
-              variant="ghost"
+              variant="ghost-muted"
               size="icon-sm"
-              className="text-muted-foreground"
               aria-label="메뉴 닫기"
             >
               <XIcon className="size-5" />

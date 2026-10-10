@@ -69,7 +69,7 @@ export default async function MeetingDetailPage({
         <Link href="/meetings" className="text-sm text-stone-600 underline">← 모임 목록</Link>
         <h2 className="mt-2 text-xl font-semibold">{meeting.title}</h2>
         <p className="text-sm text-stone-600">{formatDateTimeKo(meeting.date)}</p>
-        <p className="mt-1 text-xs text-stone-500">
+        <p className="mt-1 text-xs text-muted-foreground">
           참석: 가장 · 임원 · 게스트(부가장·사역팀장) · 목사
         </p>
       </div>
@@ -94,7 +94,7 @@ export default async function MeetingDetailPage({
               <select
                 name="userId"
                 defaultValue={prayerLeaderId ?? ""}
-                className="rounded-lg border border-stone-300 px-2 py-1.5 text-sm"
+                className="rounded-lg border border-input px-2 py-1.5 text-sm"
               >
                 <option value="">미지정</option>
                 {familyLeaders.map((leader) => (
@@ -139,17 +139,17 @@ export default async function MeetingDetailPage({
             <MeetingFileUpload meetingId={id} kind="LESSON" label="교안 업로드" />
           )}
 
-          <div className="-mx-4 divide-y divide-stone-100 border-t border-stone-100 sm:-mx-5">
+          <div className="-mx-4 divide-y divide-muted border-t border-muted sm:-mx-5">
             <Link
               href={`${SORTING_HAT_USER_PATH}${hatQuery}`}
-              className="block px-4 py-3 text-sm font-medium text-stone-900 transition hover:bg-stone-50 focus-visible:bg-stone-50 focus-visible:outline-none sm:px-5"
+              className="block px-4 py-3 text-sm font-medium text-foreground transition hover:bg-background focus-visible:bg-background focus-visible:outline-none sm:px-5"
             >
               배정모자 열기
             </Link>
             {canAdmin && (
               <Link
                 href={`${SORTING_HAT_ADMIN_PATH}${hatQuery}`}
-                className="block px-4 py-3 text-sm font-medium text-stone-900 transition hover:bg-stone-50 focus-visible:bg-stone-50 focus-visible:outline-none sm:px-5"
+                className="block px-4 py-3 text-sm font-medium text-foreground transition hover:bg-background focus-visible:bg-background focus-visible:outline-none sm:px-5"
               >
                 배정 관리
               </Link>

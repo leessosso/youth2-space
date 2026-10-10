@@ -43,9 +43,9 @@ export function FamilyReportThread({
 
   return (
     <div className="flex flex-col">
-      <div className="max-h-[60vh] space-y-2 overflow-y-auto bg-stone-50 px-2 py-2 sm:px-3">
+      <div className="max-h-[60vh] space-y-2 overflow-y-auto bg-background px-2 py-2 sm:px-3">
         {messages.length === 0 && (
-          <p className="text-sm text-stone-500">첫 가족 현황을 남겨 주세요.</p>
+          <p className="text-sm text-muted-foreground">첫 가족 현황을 남겨 주세요.</p>
         )}
         {messages.map((m) => {
           const isPastor = m.author.role === "PASTOR" || m.author.role === "ADMIN";
@@ -55,8 +55,8 @@ export function FamilyReportThread({
               key={m.id}
               className={`w-fit max-w-[96%] rounded-xl px-3 py-2 text-sm ${
                 isPastor
-                  ? "ml-auto bg-sky-100 text-sky-950"
-                  : "bg-white text-stone-900 shadow-sm"
+                  ? "ml-auto bg-info-muted text-foreground"
+                  : "bg-surface text-foreground shadow-sm"
               }`}
             >
               <div className="flex items-center gap-2">
@@ -75,12 +75,12 @@ export function FamilyReportThread({
           );
         })}
       </div>
-      <form onSubmit={submit} className="space-y-2 border-t border-stone-100 px-2 py-2 sm:px-3">
+      <form onSubmit={submit} className="space-y-2 border-t border-muted px-2 py-2 sm:px-3">
         {members.length > 0 && (
           <select
             value={aboutMemberId}
             onChange={(e) => setAboutMemberId(e.target.value)}
-            className="rounded-lg border border-stone-300 px-3 py-2 text-sm"
+            className="rounded-lg border border-input px-3 py-2 text-sm"
           >
             <option value="">가족 전체</option>
             {members.map((m) => (
@@ -94,7 +94,7 @@ export function FamilyReportThread({
           placeholder="가족 현황, 기도 제목, 상담 요청 등"
           required
         />
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-destructive">{error}</p>}
         <Button type="submit">보내기</Button>
       </form>
     </div>

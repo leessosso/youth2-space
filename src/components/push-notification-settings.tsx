@@ -161,7 +161,7 @@ export function PushNotificationSettings({
     return (
       <Card>
         <CardHeader title="웹 푸시 알림" subtitle="돌봄카드 등 중요 알림 (로그인 사용자)" />
-        <p className="px-4 py-3 text-sm text-stone-500 sm:px-5">
+        <p className="px-4 py-3 text-sm text-muted-foreground sm:px-5">
           이 브라우저에서는 웹 푸시를 지원하지 않습니다. iPhone은 홈 화면에 추가한 PWA에서만 알림이
           동작합니다.
         </p>
@@ -196,7 +196,7 @@ export function PushNotificationSettings({
             </Button>
           )}
         </div>
-        <p className="text-xs text-stone-500">
+        <p className="text-xs text-muted-foreground">
           iOS Safari는 홈 화면에 「2청년회」을 추가한 PWA에서만 웹 푸시가 동작합니다.
         </p>
       </div>

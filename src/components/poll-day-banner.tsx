@@ -6,7 +6,7 @@ export function PollDayBanner({ href }: { href: string }) {
 
   const inner = (
     <>
-      <Badge tone="accent" className="shrink-0 rounded-md font-semibold">
+      <Badge tone="accent" shape="tag" className="shrink-0">
         투표일
       </Badge>
       <span className="min-w-0 flex-1">

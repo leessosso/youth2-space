@@ -43,11 +43,11 @@ export function SurveyCreateForm({
             value="participation"
             checked={mode === "participation"}
             onChange={() => setMode("participation")}
-            className="mt-0.5 border-stone-300"
+            className="mt-0.5 border-input"
           />
           <span>
             <span className="font-medium text-stone-800">가족 참여만</span>
-            <span className="mt-0.5 block text-stone-500">가족원마다 참여 여부를 예/아니오로 받습니다.</span>
+            <span className="mt-0.5 block text-muted-foreground">가족원마다 참여 여부를 예/아니오로 받습니다.</span>
           </span>
         </label>
         <label className="flex items-start gap-2 text-sm">
@@ -57,11 +57,11 @@ export function SurveyCreateForm({
             value="questions"
             checked={mode === "questions"}
             onChange={() => setMode("questions")}
-            className="mt-0.5 border-stone-300"
+            className="mt-0.5 border-input"
           />
           <span>
             <span className="font-medium text-stone-800">질문 조사</span>
-            <span className="mt-0.5 block text-stone-500">예/아니오, 인원, 메모 질문을 직접 만듭니다.</span>
+            <span className="mt-0.5 block text-muted-foreground">예/아니오, 인원, 메모 질문을 직접 만듭니다.</span>
           </span>
         </label>
       </fieldset>
@@ -83,7 +83,7 @@ export function SurveyCreateForm({
         <div>
           <Label>참여 항목</Label>
           <Input name="participationLabel" defaultValue="참여" placeholder="참여" />
-          <p className="mt-1 text-xs text-stone-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             가족원 이름 옆에 이 항목이 체크박스로 나옵니다. 예: 참석 예정, 식사
           </p>
         </div>
@@ -96,7 +96,7 @@ export function SurveyCreateForm({
               <select
                 name={`q${i}_type`}
                 defaultValue="yesno"
-                className="rounded-lg border border-stone-300 px-2 py-2 text-sm"
+                className="rounded-lg border border-input px-2 py-2 text-sm"
               >
                 <option value="yesno">예/아니오</option>
                 <option value="number">인원(숫자)</option>
@@ -107,7 +107,7 @@ export function SurveyCreateForm({
         </div>
       )}
 
-      {error && <p className="text-sm text-red-700">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
       <Button type="submit" disabled={pending}>
         {pending ? "만드는 중" : "만들기"}
       </Button>

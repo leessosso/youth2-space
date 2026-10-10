@@ -43,7 +43,7 @@ export function FitText({
     <div ref={boxRef} className="min-w-0 overflow-hidden">
       <h1
         ref={textRef}
-        className={`whitespace-nowrap font-semibold leading-tight text-stone-900 ${className}`}
+        className={`whitespace-nowrap font-semibold leading-tight text-foreground ${className}`}
         style={{ fontSize: maxPx }}
       >
         {text}

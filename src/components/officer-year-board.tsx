@@ -38,8 +38,8 @@ export function OfficerYearBoard({
         {OFFICER_TITLES.map((title) => {
           const seat = seats.find((item) => item.title === title);
           return (
-            <li key={title} className="rounded-xl border border-stone-200 bg-white p-4">
-              <p className="text-sm font-medium text-stone-900">{title}</p>
+            <li key={title} className="rounded-xl border border-border bg-surface p-4">
+              <p className="text-sm font-medium text-foreground">{title}</p>
               {seat?.userId ? (
                 <FilledSeat title={title} name={seat.name ?? "알 수 없음"} email={seat.email} isPastor={isPastor} />
               ) : (
@@ -71,7 +71,7 @@ function FilledSeat({
     <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
       <div>
         <p className="text-sm text-stone-800">{name}</p>
-        {email && <p className="text-xs text-stone-500">{email}</p>}
+        {email && <p className="text-xs text-muted-foreground">{email}</p>}
       </div>
       {isPastor && (
         <form
@@ -89,7 +89,7 @@ function FilledSeat({
           </Button>
         </form>
       )}
-      {error && <p className="w-full text-sm text-red-700">{error}</p>}
+      {error && <p className="w-full text-sm text-destructive">{error}</p>}
     </div>
   );
 }
@@ -106,7 +106,7 @@ function EmptySeat({
   isPastor: boolean;
 }) {
   if (!isPastor) {
-    return <p className="mt-2 text-sm text-stone-500">비어 있음</p>;
+    return <p className="mt-2 text-sm text-muted-foreground">비어 있음</p>;
   }
 
   return (

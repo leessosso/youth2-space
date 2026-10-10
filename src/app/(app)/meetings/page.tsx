@@ -32,7 +32,7 @@ export default async function MeetingsPage() {
         }
       >
         {canAdmin && (
-          <Card className="p-4 sm:p-5 lg:sticky lg:top-8">
+          <Card className="lg:sticky lg:top-8" padding="md">
             <h3 className="font-medium">새 모임 등록</h3>
             <form
               action={async (fd) => {
@@ -82,17 +82,17 @@ function Section({
     <Card>
       <CardHeader title={title} />
       {items.length === 0 ? (
-        <p className="px-4 py-6 text-sm text-stone-500 sm:px-5">없음</p>
+        <p className="px-4 py-6 text-sm text-muted-foreground sm:px-5">없음</p>
       ) : (
-        <ul className="divide-y divide-stone-100">
+        <ul className="divide-y divide-muted">
           {items.map((m) => (
             <li key={m.id}>
               <Link
                 href={`/meetings/${m.id}`}
-                className="block px-4 py-3 transition hover:bg-stone-50 focus-visible:bg-stone-50 focus-visible:outline-none sm:px-5"
+                className="block px-4 py-3 transition hover:bg-background focus-visible:bg-background focus-visible:outline-none sm:px-5"
               >
                 <p className="font-medium">{m.title}</p>
-                <p className="text-sm text-stone-500">{formatDateTimeKo(m.date)}</p>
+                <p className="text-sm text-muted-foreground">{formatDateTimeKo(m.date)}</p>
               </Link>
             </li>
           ))}

@@ -30,7 +30,7 @@ export default async function SurveysPage() {
       >
         {canAdmin && (
           <div className="space-y-6">
-          <Card className="p-4 sm:p-5">
+          <Card padding="md">
             <h3 className="font-medium">조사 만들기</h3>
             <p className="mt-1 text-sm text-stone-600">
               예배, 식사, 행사처럼 필요한 조사를 열어 가장이 가족원 대신 응답하게 합니다.
@@ -44,12 +44,12 @@ export default async function SurveysPage() {
 
         <Card>
           <CardHeader title="조사 목록" />
-          <ul className="divide-y divide-stone-100">
+          <ul className="divide-y divide-muted">
             {surveys.map((s) => (
               <li key={s.id}>
                 <Link
                   href={`/surveys/${s.id}`}
-                  className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 transition hover:bg-stone-50 focus-visible:bg-stone-50 focus-visible:outline-none sm:px-5"
+                  className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 transition hover:bg-background focus-visible:bg-background focus-visible:outline-none sm:px-5"
                 >
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -58,7 +58,7 @@ export default async function SurveysPage() {
                         {isParticipationSurvey(s.kind) ? "참여" : "질문"}
                       </Badge>
                     </div>
-                    <p className="text-sm text-stone-500">{formatDateKo(s.eventDate)}</p>
+                    <p className="text-sm text-muted-foreground">{formatDateKo(s.eventDate)}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge tone={s.status === "open" ? "green" : "neutral"}>
@@ -69,7 +69,7 @@ export default async function SurveysPage() {
               </li>
             ))}
             {surveys.length === 0 && (
-              <li className="px-4 py-6 text-sm text-stone-500 sm:px-5">등록된 조사가 없습니다.</li>
+              <li className="px-4 py-6 text-sm text-muted-foreground sm:px-5">등록된 조사가 없습니다.</li>
             )}
           </ul>
         </Card>

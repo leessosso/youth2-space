@@ -40,7 +40,7 @@ export function AnnouncementForm({ action, users, initial, cancelHref = "/announ
                 name="audience"
                 value={a}
                 defaultChecked={(initial?.audience ?? "all") === a}
-                className="border-stone-300"
+                className="border-input"
               />
               {audienceLabel(a)}
             </label>
@@ -49,7 +49,7 @@ export function AnnouncementForm({ action, users, initial, cancelHref = "/announ
       </div>
       <div>
         <Label>사용자 선택 (대상이 「선택한 사용자」일 때)</Label>
-        <p className="mb-2 text-xs text-stone-500">알림을 켠 사용자만 푸시를 받습니다.</p>
+        <p className="mb-2 text-xs text-muted-foreground">알림을 켠 사용자만 푸시를 받습니다.</p>
         <AnnouncementUserPicker users={users} defaultSelectedIds={initial?.selectedUserIds ?? []} />
       </div>
       <div className="flex flex-wrap gap-2">

@@ -46,11 +46,11 @@ export function MeetingFileUpload({ meetingId, kind, label, hint }: Props) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-2 border-t border-stone-100 pt-3">
+    <form onSubmit={onSubmit} className="space-y-2 border-t border-muted pt-3">
       <Label>{label}</Label>
-      {hint && <p className="text-xs text-stone-500">{hint}</p>}
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
       <input type="file" name="file" required disabled={pending} className="text-sm" />
-      {error && <p className="text-sm text-red-700">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
       <Button type="submit" variant="secondary" disabled={pending}>
         {pending ? "올리는 중…" : "올리기"}
       </Button>

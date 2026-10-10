@@ -48,7 +48,7 @@ function LogoutButton({ className }: { className?: string }) {
     >
       <button
         type="submit"
-        className="w-full whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm text-muted-foreground hover:bg-stone-100"
+        className="w-full whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted"
       >
         로그아웃
       </button>
@@ -73,7 +73,7 @@ export function AppShell({
         <div className="border-b border-border px-5 py-4">
           <Link
             href="/dashboard"
-            className="block cursor-pointer rounded-lg -mx-2 px-2 py-1 transition-colors hover:bg-stone-100"
+            className="block cursor-pointer rounded-lg -mx-2 px-2 py-1 transition-colors hover:bg-muted"
           >
             <p className="text-lg font-semibold text-foreground">2청년회</p>
             <p className="mt-0.5 text-xs text-muted-foreground">통합 플랫폼</p>
@@ -95,7 +95,7 @@ export function AppShell({
           <div className="flex flex-nowrap items-center gap-2 px-3 py-2 sm:px-4">
             <Link
               href="/dashboard"
-              className="min-w-0 flex-1 cursor-pointer rounded-lg px-1 transition-colors hover:bg-stone-100"
+              className="min-w-0 flex-1 cursor-pointer rounded-lg px-1 transition-colors hover:bg-muted"
             >
               <FitText text="2청년회" />
             </Link>

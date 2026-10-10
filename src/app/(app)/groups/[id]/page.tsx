@@ -46,7 +46,7 @@ export default async function GroupDetailPage({
         {canAdmin && group.currentLeaderId && !members.some((member) => member.userId === group.currentLeaderId) && (
           <p className="mt-2 text-sm text-stone-600">
             이 가장은 성도 명단과 연결되어 있지 않습니다.{" "}
-            <Link href="/admin/members" className="font-medium text-stone-900 underline">
+            <Link href="/admin/members" className="font-medium text-foreground underline">
               성도 명단
             </Link>
             에서 연결해 주세요.
@@ -57,23 +57,23 @@ export default async function GroupDetailPage({
       <div className="grid items-start gap-6 lg:grid-cols-2">
       <Card>
         <CardHeader title="가족원" />
-        <ul className="divide-y divide-stone-100">
+        <ul className="divide-y divide-muted">
           {members.map((m) => (
             <li key={m.id} className="px-4 py-3 font-medium sm:px-5">
               {m.name}
               {m.userId && m.userId === group.currentLeaderId && (
-                <span className="ml-2 text-xs font-normal text-stone-500">가장</span>
+                <span className="ml-2 text-xs font-normal text-muted-foreground">가장</span>
               )}
             </li>
           ))}
           {members.length === 0 && (
-            <li className="px-4 py-6 text-sm text-stone-500 sm:px-5">가족원이 없습니다.</li>
+            <li className="px-4 py-6 text-sm text-muted-foreground sm:px-5">가족원이 없습니다.</li>
           )}
         </ul>
         {canAdmin && (
-          <p className="border-t border-stone-100 px-4 py-3 text-sm text-stone-600 sm:px-5">
+          <p className="border-t border-muted px-4 py-3 text-sm text-stone-600 sm:px-5">
             가족원 추가는{" "}
-            <Link href="/admin/members" className="font-medium text-stone-900 underline">
+            <Link href="/admin/members" className="font-medium text-foreground underline">
               성도 명단
             </Link>
             에서 합니다.
@@ -84,7 +84,7 @@ export default async function GroupDetailPage({
       {canAdmin && (
         <Card>
           <CardHeader title="가족원 소속 변경" subtitle="다른 가족에서 이 가족으로 이동" />
-          <ul className="divide-y divide-stone-100">
+          <ul className="divide-y divide-muted">
             {allMembers
               .filter((m) => m.groupId !== id)
               .map((m) => (
@@ -108,18 +108,18 @@ export default async function GroupDetailPage({
         href={`/reports/${id}`}
         className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
       >
-        <Card className="h-full transition hover:border-stone-300 hover:bg-stone-50">
+        <Card className="h-full" interactive>
           <CardHeader title="돌봄카드" subtitle="목사와 가장이 나누는 방" />
         </Card>
       </Link>
 
       <Card>
         <CardHeader title="가장 이력" subtitle="상반기·하반기 가장 구성" />
-        <ul className="divide-y divide-stone-100 text-sm">
+        <ul className="divide-y divide-muted text-sm">
           {leaderTerms.map((t) => (
             <li key={t.id} className="px-4 py-3 sm:px-5">
               <span className="font-medium">{leaders.get(t.leaderId)?.name ?? "알 수 없음"}</span>
-              <span className="text-stone-500">
+              <span className="text-muted-foreground">
                 {" "}
                 · {termLabel({ year: t.year, half: t.half })} · {formatDateKo(t.startedAt)}
                 {t.endedAt ? ` ~ ${formatDateKo(t.endedAt)}` : " ~ 현재"}
@@ -127,7 +127,7 @@ export default async function GroupDetailPage({
             </li>
           ))}
           {leaderTerms.length === 0 && (
-            <li className="px-4 py-6 text-sm text-stone-500 sm:px-5">이력이 없습니다.</li>
+            <li className="px-4 py-6 text-sm text-muted-foreground sm:px-5">이력이 없습니다.</li>
           )}
         </ul>
       </Card>

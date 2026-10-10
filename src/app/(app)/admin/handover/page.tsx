@@ -79,15 +79,15 @@ export default async function HandoverPage() {
         </p>
       </div>
 
-      <Card className="p-4 sm:p-5">
-        <h3 className="font-medium text-stone-900">다음 학기 시작</h3>
+      <Card padding="md">
+        <h3 className="font-medium text-foreground">다음 학기 시작</h3>
         <p className="mt-1 text-sm text-stone-600">
           {openingNewYear
             ? `${termLabel(upcoming)}를 엽니다. 올해 임원 직책은 끝나고, 목사가 새 임원을 앉힙니다. 그 임원이 가족과 가장을 구성합니다. 이전 가족원은 「가족」에서 미배정으로 보입니다.`
             : `${termLabel(upcoming)}를 엽니다. 올해 임원은 그대로 두고, 가족과 가장만 다시 짭니다. 이전 가족원은 「가족」에서 미배정으로 보입니다.`}
         </p>
         {openingNewYear && !isPastor ? (
-          <p className="mt-3 text-sm text-stone-500">다음 해 상반기는 목사가 엽니다.</p>
+          <p className="mt-3 text-sm text-muted-foreground">다음 해 상반기는 목사가 엽니다.</p>
         ) : (
           <form
             action={async () => {
@@ -136,7 +136,7 @@ export default async function HandoverPage() {
                 memberLabel="이 학기 가장"
               />
               <div>
-                <p className="text-xs font-medium uppercase text-stone-500">이력</p>
+                <p className="text-xs font-medium uppercase text-muted-foreground">이력</p>
                 <ul className="mt-2 space-y-1 text-sm text-stone-700">
                   {terms.map((t) => (
                     <li key={t.id}>
@@ -151,7 +151,7 @@ export default async function HandoverPage() {
           </Card>
         ))}
         {groupsWithTerms.length === 0 && (
-          <p className="text-sm text-stone-500">이번 학기 가족이 없습니다. 「가족」에서 먼저 만들어 주세요.</p>
+          <p className="text-sm text-muted-foreground">이번 학기 가족이 없습니다. 「가족」에서 먼저 만들어 주세요.</p>
         )}
         </div>
       </div>
@@ -159,12 +159,12 @@ export default async function HandoverPage() {
       {pastWithHeads.length > 0 && (
         <Card>
           <CardHeader title="지난 학기 가족" subtitle="열람만 가능합니다" />
-          <ul className="divide-y divide-stone-100 text-sm">
+          <ul className="divide-y divide-muted text-sm">
             {pastWithHeads.map((g) => (
               <li key={g.id}>
                 <Link
                   href={`/groups/${g.id}`}
-                  className="block px-4 py-3 transition hover:bg-stone-50 focus-visible:bg-stone-50 focus-visible:outline-none sm:px-5"
+                  className="block px-4 py-3 transition hover:bg-background focus-visible:bg-background focus-visible:outline-none sm:px-5"
                 >
                   {g.name} · {termLabel({ year: g.year, half: g.half })} · 가장{" "}
                   {(g.currentLeaderId && leaderNames.get(g.currentLeaderId)?.name) ?? "미배정"}
