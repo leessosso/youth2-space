@@ -21,7 +21,7 @@ export default async function NewAnnouncementPage() {
         <h2 className="text-xl font-semibold">새 공지</h2>
         <p className="text-sm text-stone-600">임시저장하거나 지금 바로 푸시를 보낼 수 있습니다.</p>
       </div>
-      <Card className="max-w-2xl p-4 sm:p-5">
+      <Card className="max-w-2xl" padding="md">
         <AnnouncementForm
           users={users}
           action={async (formData) => {

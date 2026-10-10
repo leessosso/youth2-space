@@ -29,7 +29,7 @@ export default async function SurveyDetailPage({
     const myGroup = await getGroupByCurrentLeader(user.id);
     if (!myGroup) {
       return (
-        <Card className="p-6 text-center text-stone-600">
+        <Card padding="lg" tone="empty">
           현재 담당 가족이 없습니다. 목사에게 가장 배정을 요청해 주세요.
         </Card>
       );
@@ -54,7 +54,7 @@ export default async function SurveyDetailPage({
           <Link href="/surveys" className="text-sm text-stone-600 underline">← 조사 목록</Link>
           <h2 className="mt-2 text-xl font-semibold">{survey.title}</h2>
           <p className="text-sm text-stone-600">{formatDateKo(survey.eventDate)}</p>
-          {survey.description && <p className="mt-1 text-sm text-stone-500">{survey.description}</p>}
+          {survey.description && <p className="mt-1 text-sm text-muted-foreground">{survey.description}</p>}
         </div>
         <div className="flex items-center gap-2">
           <Badge tone={survey.status === "open" ? "green" : "neutral"}>
@@ -82,7 +82,7 @@ export default async function SurveyDetailPage({
         <div className="overflow-x-auto">
           <table className="w-full min-w-[560px] text-sm">
             <thead>
-              <tr className="border-b border-stone-100 text-left text-stone-500">
+              <tr className="border-b border-muted text-left text-muted-foreground">
                 <th className="px-4 py-2 sm:px-5">가족</th>
                 <th className="px-2 py-2">응답</th>
                 {survey.questions.map((q) => (
@@ -90,9 +90,9 @@ export default async function SurveyDetailPage({
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-stone-100">
+            <tbody className="divide-y divide-muted">
               {rows.map(({ group, totals }) => (
-                <tr key={group.id} className="relative hover:bg-stone-50">
+                <tr key={group.id} className="relative hover:bg-background">
                   <td className="px-4 py-2 sm:px-5">
                     <Link
                       href={`/surveys/${id}/${group.id}`}
@@ -116,7 +116,7 @@ export default async function SurveyDetailPage({
               ))}
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={2 + survey.questions.length} className="px-4 py-6 text-center text-stone-500">
+                  <td colSpan={2 + survey.questions.length} className="px-4 py-6 text-center text-muted-foreground">
                     표시할 가족이 없습니다.
                   </td>
                 </tr>

@@ -26,12 +26,12 @@ export default async function PollDayAdminPage() {
   return (
     <div className="mx-auto max-w-lg space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-stone-900">투표일 설정</h2>
+        <h2 className="text-xl font-semibold text-foreground">투표일 설정</h2>
         <p className="mt-1 text-sm text-stone-600">
           투표일은 Asia/Seoul 달력 기준입니다. 지정한 날에만 홈 상단에 배너 1개가 표시되며, poll에서
           안건을 만들어도 배너는 자동으로 생기지 않습니다.
         </p>
-        <p className="mt-2 text-sm text-stone-500">
+        <p className="mt-2 text-sm text-muted-foreground">
           배너 링크:{" "}
           <a href={pollSiteUrl} className="break-all text-primary underline">
             {pollSiteUrl}
@@ -53,7 +53,7 @@ export default async function PollDayAdminPage() {
             {settings ? (
               <span className="font-medium">{formatPollDateKey(settings.dateKey)}</span>
             ) : (
-              <span className="text-stone-500">없음</span>
+              <span className="text-muted-foreground">없음</span>
             )}
           </p>
           <p>
@@ -61,7 +61,7 @@ export default async function PollDayAdminPage() {
             {bannerActive ? (
               <span className="font-medium text-primary">오늘 노출 중</span>
             ) : (
-              <span className="text-stone-500">노출 안 함</span>
+              <span className="text-muted-foreground">노출 안 함</span>
             )}
           </p>
         </div>
@@ -91,7 +91,7 @@ export default async function PollDayAdminPage() {
       </Card>
 
       {settings && (
-        <Card className="border-stone-200">
+        <Card>
           <CardHeader title="투표일 해제" subtitle="배너를 더 이상 띄우지 않습니다." />
           <form
             action={async () => {
@@ -107,7 +107,7 @@ export default async function PollDayAdminPage() {
         </Card>
       )}
 
-      <p className="text-sm text-stone-500">
+      <p className="text-sm text-muted-foreground">
         <Link href="/dashboard" className="underline">
           대시보드로 돌아가기
         </Link>

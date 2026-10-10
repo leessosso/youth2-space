@@ -11,7 +11,7 @@ function isActive(pathname: string, href: string) {
 }
 
 const linkBase = "whitespace-nowrap rounded-lg px-3 py-2 text-sm transition-colors";
-const linkInactive = "text-stone-700 hover:bg-stone-100";
+const linkInactive = "text-stone-700 hover:bg-muted";
 const linkActive =
   "bg-primary/10 font-medium text-primary";
 

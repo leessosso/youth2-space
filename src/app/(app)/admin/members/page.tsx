@@ -60,8 +60,8 @@ export default async function MemberRosterPage() {
       </div>
 
       <div className="grid items-start gap-6 lg:grid-cols-2">
-        <Card className="p-4 sm:p-5">
-          <h3 className="text-sm font-medium text-stone-900">한꺼번에 넣기</h3>
+        <Card padding="md">
+          <h3 className="text-sm font-medium text-foreground">한꺼번에 넣기</h3>
           <p className="mt-1 text-sm text-stone-600">
             한 줄에 한 명씩 붙여 넣거나, CSV·엑셀 파일을 올립니다. 연락처는 이름 옆 둘째 칸입니다. 이미 명단에 있는 이름은 건너뜁니다.
           </p>
@@ -70,8 +70,8 @@ export default async function MemberRosterPage() {
           </div>
         </Card>
 
-        <Card className="p-4 sm:p-5">
-          <h3 className="text-sm font-medium text-stone-900">한 명 추가</h3>
+        <Card padding="md">
+          <h3 className="text-sm font-medium text-foreground">한 명 추가</h3>
           <form
             action={async (formData) => {
               "use server";
@@ -113,17 +113,17 @@ export default async function MemberRosterPage() {
       {families.length > 0 && (
         <Card>
           <CardHeader title="이번 학기 가족" subtitle="가족 화면에서 가족원을 배정합니다" />
-          <ul className="divide-y divide-stone-100 text-sm">
+          <ul className="divide-y divide-muted text-sm">
             {families.map((family) => (
               <li key={family.id}>
                 <Link
                   href={`/groups/${family.id}`}
                   prefetch={false}
-                  className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-stone-50 sm:px-5"
+                  className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-background sm:px-5"
                 >
                   <span>
-                    <span className="font-medium text-stone-900">{family.name}</span>
-                    <span className="text-stone-500"> · 가장 {family.leaderName}</span>
+                    <span className="font-medium text-foreground">{family.name}</span>
+                    <span className="text-muted-foreground"> · 가장 {family.leaderName}</span>
                   </span>
                   <span className="shrink-0 text-stone-600">{family.count}명</span>
                 </Link>

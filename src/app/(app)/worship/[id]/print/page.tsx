@@ -24,7 +24,7 @@ export default async function WorshipPrintPage({
   const groupMap = new Map(groups.map((g) => [g.id, g.name]));
 
   return (
-    <div className="mx-auto max-w-3xl bg-white p-8 text-stone-900 print:p-4">
+    <div className="mx-auto max-w-3xl bg-white p-8 text-foreground print:p-4">
       <h1 className="text-2xl font-bold">2청년회 예배 좌석 안내</h1>
       <p className="mt-1 text-stone-600">
         {service.title} · {formatDateKo(service.date)}
@@ -35,7 +35,7 @@ export default async function WorshipPrintPage({
             .filter((a) => a.zoneId === zone.id)
             .map((a) => groupMap.get(a.groupId) ?? "알 수 없음");
           return (
-            <div key={zone.id} className="border border-stone-300 p-4">
+            <div key={zone.id} className="border border-input p-4">
               <h2 className="text-lg font-semibold">{zone.name}</h2>
               <p className="mt-2 text-base">
                 {names.length ? names.join(", ") : "—"}
@@ -44,7 +44,7 @@ export default async function WorshipPrintPage({
           );
         })}
       </div>
-      <p className="mt-8 text-sm text-stone-500">인도자·가장 배포용</p>
+      <p className="mt-8 text-sm text-muted-foreground">인도자·가장 배포용</p>
     </div>
   );
 }

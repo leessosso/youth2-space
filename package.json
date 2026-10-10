@@ -5,9 +5,11 @@
   "scripts": {
     "dev": "next dev -p 43123",
     "db:seed": "tsx scripts/seed.ts",
+    "prebuild": "npm run lint:design",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "lint:design": "eslint --config eslint.design.config.mjs --max-warnings=0 src",
     "icons:generate": "node scripts/generate-pwa-icons.mjs"
   },
   "dependencies": {
@@ -32,6 +34,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@shadcn/lint": "0.2.0",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",

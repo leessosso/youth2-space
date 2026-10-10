@@ -43,23 +43,23 @@ export default async function ReportsPage() {
 
       {rows.length === 0 ? (
         <Card>
-          <p className="px-4 py-6 text-sm text-stone-500 sm:px-5">표시할 가족이 없습니다.</p>
+          <p className="px-4 py-6 text-sm text-muted-foreground sm:px-5">표시할 가족이 없습니다.</p>
         </Card>
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {rows.map(({ group, memberCount, latest }) => (
             <li key={group.id}>
               <Link href={`/reports/${group.id}`} className="block h-full">
-                <Card className="h-full transition hover:border-stone-300 hover:bg-stone-50">
+                <Card className="h-full" interactive>
                   <div className="px-4 py-4 sm:px-5">
-                    <p className="font-medium text-stone-900">
+                    <p className="font-medium text-foreground">
                       {group.name}{" "}
-                      <span className="text-sm font-normal text-stone-500">
+                      <span className="text-sm font-normal text-muted-foreground">
                         (가장 {(group.currentLeaderId && leaders.get(group.currentLeaderId)?.name) ?? "미배정"} · 가족원 {memberCount}명)
                       </span>
                     </p>
                     {latest ? (
-                      <p className="mt-1 line-clamp-1 text-sm text-stone-500">최근 메시지 있음</p>
+                      <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">최근 메시지 있음</p>
                     ) : (
                       <p className="mt-1 text-sm text-stone-400">아직 메시지 없음</p>
                     )}

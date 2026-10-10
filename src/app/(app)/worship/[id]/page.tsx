@@ -43,7 +43,7 @@ export default async function WorshipDetailPage({
         </div>
         <Link
           href={`/worship/${id}/print`}
-          className="rounded-lg border border-stone-300 px-3 py-2 text-sm hover:bg-stone-50"
+          className="rounded-lg border border-input px-3 py-2 text-sm hover:bg-background"
         >
           인쇄용 보기
         </Link>
@@ -57,7 +57,7 @@ export default async function WorshipDetailPage({
             return (
               <div
                 key={zone.id}
-                className="min-h-[100px] rounded-xl border-2 border-dashed border-stone-200 bg-stone-50 p-3"
+                className="min-h-[100px] rounded-xl border-2 border-dashed border-border bg-background p-3"
               >
                 <p className="text-sm font-semibold text-stone-800">{zone.name}</p>
                 <ul className="mt-2 space-y-1">
@@ -79,7 +79,7 @@ export default async function WorshipDetailPage({
       {canEdit && (
         <Card>
           <CardHeader title="가족별 구역 지정" />
-          <ul className="divide-y divide-stone-100">
+          <ul className="divide-y divide-muted">
             {groups.map((g) => (
               <li key={g.id} className="flex flex-wrap items-center gap-3 px-4 py-3 sm:px-5">
                 <span className="w-16 font-medium">{g.name}</span>
@@ -97,7 +97,7 @@ export default async function WorshipDetailPage({
                   <select
                     name="zoneId"
                     defaultValue={assignmentMap.get(g.id) ?? ""}
-                    className="rounded-lg border border-stone-300 px-2 py-1.5 text-sm"
+                    className="rounded-lg border border-input px-2 py-1.5 text-sm"
                     required
                   >
                     <option value="" disabled>구역 선택</option>

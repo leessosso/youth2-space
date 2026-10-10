@@ -46,7 +46,7 @@ export default async function AttendanceSundayPage({
     const myGroup = await getGroupByCurrentLeader(user.id);
     if (!myGroup) {
       return (
-        <Card className="p-6 text-center text-stone-600">
+        <Card padding="lg" tone="empty">
           현재 담당 가족이 없습니다. 목사에게 가장 배정을 요청해 주세요.
         </Card>
       );
@@ -74,14 +74,14 @@ export default async function AttendanceSundayPage({
         <h2 className="mt-2 text-xl font-semibold">{sunday.title}</h2>
         <p className="text-sm text-stone-600">{formatDateKo(sunday.date)}</p>
         {!special && (
-          <p className="mt-1 text-sm text-stone-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             {editable ? `${closeLabel}까지 입력할 수 있습니다.` : "지난 주일 출석은 수정할 수 없습니다."}
           </p>
         )}
       </div>
 
       {sp.qrMatched !== undefined && (
-        <Card className="border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+        <Card padding="md" tone="success">
           <p>
             {sp.qrService === "s4" ? "4부" : "1-3부"} QR 매칭 {sp.qrMatched}명 반영했습니다.
           </p>
@@ -106,7 +106,7 @@ export default async function AttendanceSundayPage({
         >
           <div>
             <Label>부</Label>
-            <select name="service" className="rounded-lg border border-stone-300 px-2 py-1.5 text-sm" required>
+            <select name="service" className="rounded-lg border border-input px-2 py-1.5 text-sm" required>
               <option value="s4">4부</option>
               <option value="s13">1-3부</option>
             </select>
@@ -128,7 +128,7 @@ export default async function AttendanceSundayPage({
         <div className="overflow-x-auto">
           <table className={`w-full text-sm ${special ? "" : "min-w-[640px]"}`}>
             <thead>
-              <tr className="border-b border-stone-100 text-left text-stone-500">
+              <tr className="border-b border-muted text-left text-muted-foreground">
                 <th className="px-4 py-2 sm:px-5">가족</th>
                 <th className="px-2 py-2">인원</th>
                 {special ? (
@@ -146,9 +146,9 @@ export default async function AttendanceSundayPage({
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-stone-100">
+            <tbody className="divide-y divide-muted">
               {rows.map(({ group, totals }) => (
-                <tr key={group.id} className="relative hover:bg-stone-50">
+                <tr key={group.id} className="relative hover:bg-background">
                   <td className="px-4 py-2 sm:px-5">
                     <Link
                       href={`/attendance/${sunday.id}/${group.id}`}
@@ -175,7 +175,7 @@ export default async function AttendanceSundayPage({
               ))}
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={special ? 3 : 9} className="px-4 py-6 text-center text-stone-500">
+                  <td colSpan={special ? 3 : 9} className="px-4 py-6 text-center text-muted-foreground">
                     표시할 가족이 없습니다.
                   </td>
                 </tr>

@@ -52,7 +52,7 @@ export function MemberBulkImport({
       <Button type="submit" disabled={pending}>
         {pending ? "넣는 중" : "한꺼번에 넣기"}
       </Button>
-      {error && <p className="text-sm text-red-700">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
       {summary && <p className="text-sm text-stone-600">{summary}</p>}
     </form>
   );

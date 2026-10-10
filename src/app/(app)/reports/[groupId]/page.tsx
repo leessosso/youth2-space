@@ -53,10 +53,10 @@ export default async function FamilyReportPage({
       {isPastorOrAdmin(user.role) && (
         <Link href="/reports" className="px-4 text-sm text-stone-600 underline sm:px-0">← 돌봄카드 목록</Link>
       )}
-      <Card className="overflow-hidden rounded-none border-x-0 shadow-none sm:max-w-3xl sm:rounded-xl sm:border-x sm:shadow-sm">
-        <div className="flex items-center justify-between gap-3 border-b border-stone-100 px-3 py-2">
-          <h2 className="text-base font-semibold text-stone-900">{group.name}</h2>
-          <p className="truncate text-xs text-stone-500">가장 {leaderName ?? "미배정"}</p>
+      <Card className="overflow-hidden sm:max-w-3xl" bleed>
+        <div className="flex items-center justify-between gap-3 border-b border-muted px-3 py-2">
+          <h2 className="text-base font-semibold text-foreground">{group.name}</h2>
+          <p className="truncate text-xs text-muted-foreground">가장 {leaderName ?? "미배정"}</p>
         </div>
         <FamilyReportThread
           groupId={group.id}

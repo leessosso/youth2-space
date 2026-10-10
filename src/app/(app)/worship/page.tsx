@@ -28,7 +28,7 @@ export default async function WorshipListPage() {
         }
       >
       {canAdmin && (
-        <Card className="p-4 sm:p-5 lg:sticky lg:top-8">
+        <Card className="lg:sticky lg:top-8" padding="md">
           <h3 className="font-medium">새 예배 일정</h3>
           <form
             action={async (fd) => {
@@ -55,22 +55,22 @@ export default async function WorshipListPage() {
 
       <Card>
         <CardHeader title="예배 목록" />
-        <ul className="divide-y divide-stone-100">
+        <ul className="divide-y divide-muted">
           {services.map((s, i) => (
             <li key={s.id}>
               <Link
                 href={`/worship/${s.id}`}
-                className="block px-4 py-3 transition hover:bg-stone-50 focus-visible:bg-stone-50 focus-visible:outline-none sm:px-5"
+                className="block px-4 py-3 transition hover:bg-background focus-visible:bg-background focus-visible:outline-none sm:px-5"
               >
                 <p className="font-medium">{s.title}</p>
-                <p className="text-sm text-stone-500">
+                <p className="text-sm text-muted-foreground">
                   {formatDateKo(s.date)} · {assignmentCounts[i]}가족
                 </p>
               </Link>
             </li>
           ))}
           {services.length === 0 && (
-            <li className="px-4 py-6 text-sm text-stone-500 sm:px-5">등록된 예배가 없습니다.</li>
+            <li className="px-4 py-6 text-sm text-muted-foreground sm:px-5">등록된 예배가 없습니다.</li>
           )}
         </ul>
       </Card>

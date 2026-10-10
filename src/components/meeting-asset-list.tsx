@@ -83,7 +83,7 @@ export function MeetingAssetList({
   }
 
   if (assets.length === 0) {
-    return <p className="text-sm text-stone-500">{emptyLabel}</p>;
+    return <p className="text-sm text-muted-foreground">{emptyLabel}</p>;
   }
 
   return (
@@ -97,13 +97,13 @@ export function MeetingAssetList({
           return (
             <li
               key={asset.id}
-              className="rounded-lg border border-stone-200 px-3 py-2 text-sm"
+              className="rounded-lg border border-border px-3 py-2 text-sm"
             >
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                  <p className="truncate font-medium text-stone-900">{asset.fileName}</p>
+                  <p className="truncate font-medium text-foreground">{asset.fileName}</p>
                   {isCommentary && !published && (
-                    <p className="mt-0.5 text-xs text-amber-700">
+                    <p className="mt-0.5 text-xs text-warning">
                       비공개 — 가장에게는 공개 후에만 보입니다.
                     </p>
                   )}
@@ -113,7 +113,7 @@ export function MeetingAssetList({
                     <Button
                       type="button"
                       variant="secondary"
-                      className="px-3 py-1.5 text-xs"
+                      size="sm"
                       disabled={previewLoading}
                       onClick={() => openPreview(asset)}
                     >
@@ -122,7 +122,7 @@ export function MeetingAssetList({
                   )}
                   <a
                     href={`/api/meetings/${meetingId}/assets/${asset.id}?download=1`}
-                    className="inline-flex items-center justify-center rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-xs font-medium text-stone-800 transition hover:bg-stone-50"
+                    className="inline-flex items-center justify-center rounded-lg border border-input bg-surface px-3 py-1.5 text-xs font-medium text-stone-800 transition hover:bg-background"
                   >
                     다운로드
                   </a>
@@ -131,7 +131,7 @@ export function MeetingAssetList({
                       <Button
                         type="button"
                         variant="ghost"
-                        className="px-3 py-1.5 text-xs"
+                        size="sm"
                         onClick={() => void unpublishMeetingCommentary(meetingId, asset.id)}
                       >
                         비공개로 되돌리기
@@ -139,7 +139,7 @@ export function MeetingAssetList({
                     ) : (
                       <Button
                         type="button"
-                        className="px-3 py-1.5 text-xs"
+                        size="sm"
                         onClick={() => void publishMeetingCommentary(meetingId, asset.id)}
                       >
                         공개
@@ -149,7 +149,7 @@ export function MeetingAssetList({
                 </div>
               </div>
               {previewKind === "none" && (
-                <p className="mt-1 text-xs text-stone-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   이 형식은 미리보기를 지원하지 않습니다. 다운로드만 가능합니다.
                 </p>
               )}
@@ -159,29 +159,30 @@ export function MeetingAssetList({
       </ul>
 
       {previewError && (
-        <p className="mt-2 text-sm text-red-700" role="alert">{previewError}</p>
+        <p className="mt-2 text-sm text-destructive" role="alert">{previewError}</p>
       )}
 
       <Dialog open={!!preview} onOpenChange={(open) => { if (!open) closePreview(); }}>
         <DialogContent
           showCloseButton={false}
-          className="flex h-[min(90vh,100%)] w-full max-w-4xl flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl"
+          flush
+          className="flex h-[min(90vh,100%)] w-full max-w-4xl flex-col overflow-hidden sm:max-w-4xl"
           aria-label={preview ? `${preview.fileName} 미리보기` : undefined}
         >
-          <DialogHeader className="flex-row items-center justify-between space-y-0 border-b border-border px-3 py-2 sm:px-4">
-            <DialogTitle className="truncate text-sm font-medium">
+          <DialogHeader variant="bar">
+            <DialogTitle size="sm">
               {preview?.fileName}
             </DialogTitle>
-            <Button type="button" variant="secondary" className="shrink-0 px-3 py-1.5 text-xs" onClick={closePreview}>
+            <Button type="button" variant="secondary" size="sm" className="shrink-0" onClick={closePreview}>
               닫기
             </Button>
           </DialogHeader>
-          <div className="min-h-0 flex-1 overflow-auto bg-stone-100 p-2 sm:p-3">
+          <div className="min-h-0 flex-1 overflow-auto bg-muted p-2 sm:p-3">
             {preview?.kind === "pdf" ? (
               <iframe
                 title={preview.fileName}
                 src={preview.url}
-                className="h-[min(80vh,100%)] w-full min-h-[50vh] rounded-lg border border-stone-200 bg-white"
+                className="h-[min(80vh,100%)] w-full min-h-[50vh] rounded-lg border border-border bg-surface"
               />
             ) : preview ? (
               <img

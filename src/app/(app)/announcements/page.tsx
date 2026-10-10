@@ -33,16 +33,16 @@ export default async function AnnouncementsPage() {
       {canManage && drafts.length > 0 && (
         <Card>
           <CardHeader title="임시저장" />
-          <ul className="divide-y divide-stone-100">
+          <ul className="divide-y divide-muted">
             {drafts.map((a) => (
               <li key={a.id}>
                 <Link
                   href={`/announcements/${a.id}`}
-                  className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 transition hover:bg-stone-50 focus-visible:bg-stone-50 focus-visible:outline-none sm:px-5"
+                  className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 transition hover:bg-background focus-visible:bg-background focus-visible:outline-none sm:px-5"
                 >
                   <div>
                     <p className="font-medium">{a.title}</p>
-                    <p className="text-sm text-stone-500">
+                    <p className="text-sm text-muted-foreground">
                       {audienceLabel(a.audience)} · {formatDateTimeKo(a.createdAt)}
                     </p>
                   </div>
@@ -56,15 +56,15 @@ export default async function AnnouncementsPage() {
 
       <Card>
         <CardHeader title="발송 내역" />
-        <ul className="divide-y divide-stone-100">
+        <ul className="divide-y divide-muted">
           {sent.map((a) => (
             <li key={a.id}>
               <Link
                 href={`/announcements/${a.id}`}
-                className="block px-4 py-3 transition hover:bg-stone-50 focus-visible:bg-stone-50 focus-visible:outline-none sm:px-5"
+                className="block px-4 py-3 transition hover:bg-background focus-visible:bg-background focus-visible:outline-none sm:px-5"
               >
                 <p className="font-medium">{a.title}</p>
-                <p className="text-sm text-stone-500">
+                <p className="text-sm text-muted-foreground">
                   {audienceLabel(a.audience)}
                   {a.sentAt ? ` · ${formatDateTimeKo(a.sentAt)}` : ""}
                 </p>
@@ -72,7 +72,7 @@ export default async function AnnouncementsPage() {
             </li>
           ))}
           {sent.length === 0 && (
-            <li className="px-4 py-6 text-sm text-stone-500 sm:px-5">발송된 공지가 없습니다.</li>
+            <li className="px-4 py-6 text-sm text-muted-foreground sm:px-5">발송된 공지가 없습니다.</li>
           )}
         </ul>
       </Card>

@@ -53,14 +53,14 @@ export default async function AttendanceListPage() {
         <Card>
           <Link
             href={`/attendance/${current.sunday.id}`}
-            className="block px-4 py-4 transition hover:bg-stone-50 focus-visible:bg-stone-50 focus-visible:outline-none sm:px-5"
+            className="block px-4 py-4 transition hover:bg-background focus-visible:bg-background focus-visible:outline-none sm:px-5"
           >
             <div className="flex flex-wrap items-center gap-2">
               <p className="font-medium">{current.sunday.title}</p>
               <Badge tone="green">이번 주일</Badge>
             </div>
-            <p className="text-sm text-stone-500">{formatDateKo(current.sunday.date)}</p>
-            <p className="mt-1 text-xs text-stone-500">
+            <p className="text-sm text-muted-foreground">{formatDateKo(current.sunday.date)}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
               {formatDateKo(dateKeyToKstNoonIso(weeklyAttendanceCloseDateKey(currentKey)))}까지 입력
             </p>
             <WeekTotals totals={totalsById.get(current.sunday.id)} showQr={canAdmin} />
@@ -69,15 +69,15 @@ export default async function AttendanceListPage() {
       )}
 
       <CollapsibleSection title="지난 주일" subtitle="지난 주일은 볼 수만 있습니다">
-        <ul className="divide-y divide-stone-100">
+        <ul className="divide-y divide-muted">
           {past.map((week) => (
             <li key={week.sunday.id}>
               <Link
                 href={`/attendance/${week.sunday.id}`}
-                className="block px-4 py-3 transition hover:bg-stone-50 focus-visible:bg-stone-50 focus-visible:outline-none sm:px-5"
+                className="block px-4 py-3 transition hover:bg-background focus-visible:bg-background focus-visible:outline-none sm:px-5"
               >
                 <p className="font-medium">{week.sunday.title}</p>
-                <p className="text-sm text-stone-500">{formatDateKo(week.sunday.date)}</p>
+                <p className="text-sm text-muted-foreground">{formatDateKo(week.sunday.date)}</p>
                 <WeekTotals totals={totalsById.get(week.sunday.id)} showQr={canAdmin} />
               </Link>
             </li>
@@ -94,7 +94,7 @@ export default async function AttendanceListPage() {
           }
         >
           {canAdmin && (
-            <Card className="p-4 sm:p-5">
+            <Card padding="md">
               <h3 className="font-medium">비정기 출석체크</h3>
               <p className="mt-1 text-sm text-stone-600">
                 수련회나 특별 모임처럼, 매주가 아닌 날에만 엽니다.
@@ -124,20 +124,20 @@ export default async function AttendanceListPage() {
 
           <Card>
             <CardHeader title="비정기 출석" subtitle="참석 여부만 체크합니다" />
-            <ul className="divide-y divide-stone-100">
+            <ul className="divide-y divide-muted">
               {specials.map((s) => (
                 <li key={s.id}>
                   <Link
                     href={`/attendance/${s.id}`}
-                    className="block px-4 py-3 transition hover:bg-stone-50 focus-visible:bg-stone-50 focus-visible:outline-none sm:px-5"
+                    className="block px-4 py-3 transition hover:bg-background focus-visible:bg-background focus-visible:outline-none sm:px-5"
                   >
                     <p className="font-medium">{s.title}</p>
-                    <p className="text-sm text-stone-500">{formatDateKo(s.date)}</p>
+                    <p className="text-sm text-muted-foreground">{formatDateKo(s.date)}</p>
                   </Link>
                 </li>
               ))}
               {specials.length === 0 && (
-                <li className="px-4 py-6 text-sm text-stone-500 sm:px-5">
+                <li className="px-4 py-6 text-sm text-muted-foreground sm:px-5">
                   열린 비정기 출석이 없습니다.
                 </li>
               )}
@@ -161,12 +161,12 @@ function WeekTotals({
   showQr: boolean;
 }) {
   if (!totals) {
-    return <p className="mt-1 text-xs text-stone-500">아직 입력 전</p>;
+    return <p className="mt-1 text-xs text-muted-foreground">아직 입력 전</p>;
   }
   const qr4 = showQr ? ` · QR ${totals.s4.qr}` : "";
   const qr13 = showQr ? ` · QR ${totals.s13.qr}` : "";
   return (
-    <p className="mt-1 text-xs text-stone-500">
+    <p className="mt-1 text-xs text-muted-foreground">
       4부 출석 {totals.s4.present} · 온라인 {totals.s4.broadcast}{qr4}
       {" · "}1-3부 출석 {totals.s13.present} · 온라인 {totals.s13.broadcast}{qr13}
       {" · "}가족모임 {totals.familyMeeting}

@@ -7,14 +7,6 @@
 
 /* 2청년회 · navy primary + coral accent (shadcn-aligned) */
 :root {
-  /* Legacy brand tokens (kept for existing utilities / docs) */
-  --color-primary: #1e3a8a;
-  --color-accent: #f97316;
-  --color-bg: #f8fafc;
-  --color-surface: #ffffff;
-  --color-text: #0f172a;
-  --color-text-muted: #64748b;
-  --color-border: #e2e8f0;
   --font-sans: "Pretendard", system-ui, sans-serif;
 
   /* shadcn semantic tokens → brand */
@@ -22,6 +14,8 @@
   --foreground: #0f172a;
   --card: #ffffff;
   --card-foreground: #0f172a;
+  /* 셸 카드/입력 표면 (bg-surface) */
+  --surface: #ffffff;
   --popover: #ffffff;
   --popover-foreground: #0f172a;
   --primary: #1e3a8a;
@@ -33,6 +27,12 @@
   --accent: #f97316;
   --accent-foreground: #ffffff;
   --destructive: #b91c1c;
+  /* 상태 색 (status) — 배지·알림 등 의미가 있을 때만 사용. *-muted 는 연한 배경용 */
+  --success: #047857;
+  --success-muted: #ecfdf5;
+  --info: #0369a1;
+  --info-muted: #e0f2fe;
+  --warning: #b45309;
   --border: #e2e8f0;
   --input: #cbd5e1;
   --ring: #1e3a8a;
@@ -71,7 +71,12 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-surface: var(--color-surface);
+  --color-surface: var(--surface);
+  --color-success: var(--success);
+  --color-success-muted: var(--success-muted);
+  --color-info: var(--info);
+  --color-info-muted: var(--info-muted);
+  --color-warning: var(--warning);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -98,17 +103,15 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 
-  /* Legacy stone-* utilities → slate-aligned tokens */
-  --color-stone-50: #f8fafc;
-  --color-stone-100: #f1f5f9;
-  --color-stone-200: #e2e8f0;
-  --color-stone-300: #cbd5e1;
+  /*
+   * Legacy stone-* (slate-aligned). 시맨틱 토큰과 값이 같은 단계(50/100/200/300/500/900)는
+   * background/muted/border/input/muted-foreground/foreground 로 마이그레이션 완료 → 제거.
+   * 시맨틱 대응이 없는 중간 텍스트 단계만 레거시 중립 토큰으로 유지한다 (design lint 허용).
+   */
   --color-stone-400: #94a3b8;
-  --color-stone-500: #64748b;
   --color-stone-600: #475569;
   --color-stone-700: #334155;
   --color-stone-800: #1e293b;
-  --color-stone-900: #0f172a;
 }
 
 body {
@@ -129,6 +132,7 @@ body {
   --foreground: #f8fafc;
   --card: #1e293b;
   --card-foreground: #f8fafc;
+  --surface: #1e293b;
   --popover: #1e293b;
   --popover-foreground: #f8fafc;
   --primary: #93c5fd;
@@ -140,6 +144,11 @@ body {
   --accent: #fb923c;
   --accent-foreground: #0f172a;
   --destructive: #f87171;
+  --success: #34d399;
+  --success-muted: rgb(16 185 129 / 15%);
+  --info: #7dd3fc;
+  --info-muted: rgb(14 165 233 / 15%);
+  --warning: #fbbf24;
   --border: rgb(255 255 255 / 10%);
   --input: rgb(255 255 255 / 15%);
   --ring: #93c5fd;

@@ -43,10 +43,10 @@ export default async function GroupsPage() {
       </div>
 
       {canAdmin && officers.length === 0 && (
-        <Card className="p-4 sm:p-5">
+        <Card padding="md">
           <p className="text-sm text-stone-700">
             올해 임원이 아직 없습니다.{" "}
-            <Link href="/admin/handover" className="font-medium text-stone-900 underline">
+            <Link href="/admin/handover" className="font-medium text-foreground underline">
               가장·임원 관리
             </Link>
             에서 목사가 임원을 앉힌 뒤 가족을 구성합니다.
@@ -55,8 +55,8 @@ export default async function GroupsPage() {
       )}
 
       {canAdmin && (
-        <Card className="p-4 sm:p-5">
-          <h3 className="font-medium text-stone-900">이 학기 가족 추가</h3>
+        <Card padding="md">
+          <h3 className="font-medium text-foreground">이 학기 가족 추가</h3>
           <p className="mt-1 text-sm text-stone-600">
             가장은 성도 명단에서 고릅니다. 계정이 없으면 여기서 만들거나 기존 계정과 연결하고, 그 성도를 이 가족 가족원으로 넣습니다.
           </p>
@@ -83,7 +83,7 @@ export default async function GroupsPage() {
             title="이번 학기 미배정 가족원"
             subtitle="아직 이번 학기 가족에 없습니다. 가족 화면에서 옮겨 주세요."
           />
-          <ul className="divide-y divide-stone-100 text-sm">
+          <ul className="divide-y divide-muted text-sm">
             {unassigned.map((m) => (
               <li key={m.id} className="px-4 py-2 sm:px-5">{m.name}</li>
             ))}
@@ -99,15 +99,15 @@ export default async function GroupsPage() {
             prefetch={false}
             className="block h-full rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
           >
-            <Card className="h-full transition hover:border-stone-300 hover:bg-stone-50">
+            <Card className="h-full" interactive>
               <CardHeader title={g.name} />
               <div className="space-y-2 px-4 py-3 text-sm sm:px-5">
                 <p>
-                  <span className="text-stone-500">가장:</span>{" "}
+                  <span className="text-muted-foreground">가장:</span>{" "}
                   {(g.currentLeaderId && leaders.get(g.currentLeaderId)?.name) ?? "미배정"}
                 </p>
                 <p>
-                  <span className="text-stone-500">가족원:</span>{" "}
+                  <span className="text-muted-foreground">가족원:</span>{" "}
                   {members.filter((m) => m.groupId === g.id).length}명
                 </p>
               </div>
@@ -115,7 +115,7 @@ export default async function GroupsPage() {
           </Link>
         ))}
         {groups.length === 0 && (
-          <p className="text-sm text-stone-500">이번 학기에 구성된 가족이 없습니다.</p>
+          <p className="text-sm text-muted-foreground">이번 학기에 구성된 가족이 없습니다.</p>
         )}
       </div>
     </div>

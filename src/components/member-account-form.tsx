@@ -22,7 +22,7 @@ export type UnlinkedLeaderChoice = {
 };
 
 const selectClass =
-  "mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-500";
+  "mt-1 w-full rounded-lg border border-input bg-surface px-3 py-2 text-sm text-foreground focus:border-muted-foreground focus:outline-none focus:ring-1 focus:ring-muted-foreground";
 
 export function AppointMemberForm({
   members,
@@ -80,7 +80,7 @@ export function AppointMemberForm({
         {children}
         <p className="text-sm text-stone-600">
           성도 명단에 앉힐 사람이 없습니다.{" "}
-          <Link href="/admin/members" className="font-medium text-stone-900 underline">
+          <Link href="/admin/members" className="font-medium text-foreground underline">
             성도 명단
           </Link>
           에서 먼저 추가해 주세요.
@@ -118,7 +118,7 @@ export function AppointMemberForm({
       {member?.userId && <p className="text-sm text-stone-600">이 성도는 로그인 계정이 연결되어 있습니다.</p>}
       {needsAccount && (
         <fieldset className="space-y-3">
-          <legend className="text-sm font-medium text-stone-900">로그인 계정</legend>
+          <legend className="text-sm font-medium text-foreground">로그인 계정</legend>
           {phoneMatches.length > 0 && (
             <p className="text-sm text-stone-600">
               전화번호가 같은 계정이 있습니다. 연결하면 새 계정을 만들지 않습니다.
@@ -199,7 +199,7 @@ export function AppointMemberForm({
       <Button type="submit" disabled={pending || !memberId}>
         {pending ? "저장 중" : submitLabel}
       </Button>
-      {error && <p className="text-sm text-red-700">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
     </form>
   );
 }
@@ -219,7 +219,7 @@ export function UnlinkedLeaderLinks({
   if (leaders.length === 0) return null;
 
   return (
-    <ul className="divide-y divide-stone-100">
+    <ul className="divide-y divide-muted">
       {leaders.map((leader) => (
         <LeaderLinkRow
           key={leader.id}
@@ -319,7 +319,7 @@ function MemberPicker({
         }}
       />
       {open && (
-        <ul id={listId} role="listbox" className="mt-1 max-h-48 overflow-y-auto rounded-lg border border-stone-200 bg-white text-sm">
+        <ul id={listId} role="listbox" className="mt-1 max-h-48 overflow-y-auto rounded-lg border border-border bg-surface text-sm">
           {shown.map((member, index) => {
             const extra = [
               phonesMatch(member.phone, phone) ? "전화번호 일치" : null,
@@ -329,22 +329,22 @@ function MemberPicker({
               <li key={member.id} role="option" aria-selected={member.id === value}>
                 <button
                   type="button"
-                  className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left ${index === activeIndex ? "bg-stone-100" : ""}`}
+                  className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left ${index === activeIndex ? "bg-muted" : ""}`}
                   onMouseEnter={() => setActiveIndex(index)}
                   onPointerDown={(event) => event.preventDefault()}
                   onClick={() => choose(member)}
                 >
-                  <span className="font-medium text-stone-900">{member.name}</span>
-                  {extra.length > 0 && <span className="shrink-0 text-xs text-stone-500">{extra.join(" · ")}</span>}
+                  <span className="font-medium text-foreground">{member.name}</span>
+                  {extra.length > 0 && <span className="shrink-0 text-xs text-muted-foreground">{extra.join(" · ")}</span>}
                 </button>
               </li>
             );
           })}
           {shown.length === 0 && (
-            <li className="px-3 py-2 text-stone-500">{text ? "해당하는 성도가 없습니다." : "이름을 입력하세요."}</li>
+            <li className="px-3 py-2 text-muted-foreground">{text ? "해당하는 성도가 없습니다." : "이름을 입력하세요."}</li>
           )}
           {matches.length > shown.length && (
-            <li className="px-3 py-2 text-xs text-stone-500">앞 {shown.length}명만 보입니다. 이름을 더 입력해 주세요.</li>
+            <li className="px-3 py-2 text-xs text-muted-foreground">앞 {shown.length}명만 보입니다. 이름을 더 입력해 주세요.</li>
           )}
         </ul>
       )}
@@ -370,8 +370,8 @@ function LeaderLinkRow({
   return (
     <li className="space-y-3 px-4 py-3 sm:px-5">
       <div>
-        <p className="text-sm font-medium text-stone-900">{leader.name}</p>
-        <p className="text-xs text-stone-500">
+        <p className="text-sm font-medium text-foreground">{leader.name}</p>
+        <p className="text-xs text-muted-foreground">
           {leader.email}
           {leader.phone ? ` · ${leader.phone}` : ""}
         </p>
@@ -411,7 +411,7 @@ function LeaderLinkRow({
           </Button>
         </form>
       )}
-      {error && <p className="text-sm text-red-700">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
     </li>
   );
 }
