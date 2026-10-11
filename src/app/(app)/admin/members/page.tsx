@@ -2,23 +2,26 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createMember, importGroupMembers } from "@/app/actions";
 import { MemberBulkImport } from "@/components/member-bulk-import";
+import { MeetingAttendancePanel } from "@/components/meeting-attendance-panel";
 import { MemberRosterLists } from "@/components/member-roster-lists";
 import { Button, Card, CardHeader, Input, Label } from "@/components/ui";
 import { currentUserCanManageApp } from "@/lib/auth";
-import { termLabel } from "@/lib/format";
+import { accountLabel, termLabel } from "@/lib/format";
 import { listAllMembers, listGroups } from "@/lib/store/groups";
 import { listActiveOfficers } from "@/lib/store/officers";
 import { getCurrentTerm } from "@/lib/store/settings";
 import { getUsersByIds, listUsersByRole } from "@/lib/store/users";
+import type { AttendeeKind } from "@/lib/types";
 
 export default async function MemberRosterPage() {
   if (!(await currentUserCanManageApp())) redirect("/dashboard");
 
-  const [term, groups, members, leaders] = await Promise.all([
+  const [term, groups, members, leaders, attendees] = await Promise.all([
     getCurrentTerm(),
     listGroups(),
     listAllMembers(),
     listUsersByRole("LEADER"),
+    listUsersByRole("ATTENDEE"),
   ]);
   const [appointments, leaderNames] = await Promise.all([
     listActiveOfficers(term.year),
@@ -34,9 +37,49 @@ export default async function MemberRosterPage() {
     userId: member.userId,
   }));
   const linkedUserIds = new Set(memberChoices.flatMap((member) => (member.userId ? [member.userId] : [])));
-  const unlinkedLeaders = leaders
-    .filter((leader) => !linkedUserIds.has(leader.id))
-    .map((leader) => ({ id: leader.id, name: leader.name, email: leader.email, phone: leader.phone }));
+  const unlinkedLeaders = [
+    ...leaders
+      .filter((leader) => !linkedUserIds.has(leader.id))
+      .map((leader) => ({
+        id: leader.id,
+        name: leader.name,
+        email: leader.email,
+        phone: leader.phone,
+        detail: "리더",
+      })),
+    ...attendees
+      .filter((attendee) => !linkedUserIds.has(attendee.id))
+      .map((attendee) => ({
+        id: attendee.id,
+        name: attendee.name,
+        email: attendee.email,
+        phone: attendee.phone,
+        detail: accountLabel(attendee),
+      })),
+  ];
+  const unlinkedAttendees = attendees
+    .filter((attendee) => !linkedUserIds.has(attendee.id))
+    .map((attendee) => ({
+      id: attendee.id,
+      name: attendee.name,
+      email: attendee.email,
+      phone: attendee.phone,
+      detail: accountLabel(attendee),
+    }));
+  const attendeeByUserId = new Map(attendees.map((attendee) => [attendee.id, attendee]));
+  const currentAttendees = members.flatMap((member) => {
+    if (!member.userId) return [];
+    const account = attendeeByUserId.get(member.userId);
+    if (!account) return [];
+    const attendeeKind: AttendeeKind = account.attendeeKind === "new_family" ? "new_family" : "guest";
+    return [{ id: member.id, name: member.name, attendeeKind }];
+  });
+  const accounts = Object.fromEntries(
+    [...leaders, ...attendees].map((user) => [
+      user.id,
+      { role: user.role, attendeeKind: user.attendeeKind },
+    ]),
+  );
 
   const families = groups.map((group) => {
     const leaderName = group.currentLeaderId ? leaderNames.get(group.currentLeaderId)?.name : undefined;
@@ -54,7 +97,7 @@ export default async function MemberRosterPage() {
       <div>
         <h2 className="text-xl font-semibold">성도 명단</h2>
         <p className="text-sm text-stone-600">
-          {termLabel(term)} 가족에 넣기 전에 이름을 모아 둡니다. 가장과 임원도 이 명단의 사람이며, 앱에 들어가려면 계정을 연결합니다.
+          {termLabel(term)} 가족에 넣기 전에 이름을 모아 둡니다. 가장·임원·리더모임 참석자도 이 명단의 사람이며, 앱에 들어가려면 계정을 연결합니다.
           가족 배정은 가족 화면에서 합니다.
         </p>
       </div>
@@ -95,6 +138,12 @@ export default async function MemberRosterPage() {
         </Card>
       </div>
 
+      <MeetingAttendancePanel
+        members={memberChoices.filter((member) => !member.userId)}
+        unlinkedAttendees={unlinkedAttendees}
+        current={currentAttendees}
+      />
+
       <MemberRosterLists
         members={members.map((member) => ({
           id: member.id,
@@ -108,6 +157,7 @@ export default async function MemberRosterPage() {
         leaderIds={[...leaderIds]}
         officerTitles={Object.fromEntries(officerTitleByUser)}
         groupNames={Object.fromEntries(groupNameById)}
+        accounts={accounts}
       />
 
       {families.length > 0 && (

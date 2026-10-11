@@ -1,12 +1,13 @@
 import { normalizePhone } from "@/lib/phone";
 import { usersCol, withId } from "@/lib/store/collections";
-import type { OfficerTitle, Role, User } from "@/lib/types";
+import type { AttendeeKind, OfficerTitle, Role, User } from "@/lib/types";
 
 function withUserDefaults(user: User): User {
   return {
     ...user,
     phone: user.phone ?? null,
     mustChangePassword: user.mustChangePassword === true,
+    attendeeKind: user.attendeeKind === "guest" || user.attendeeKind === "new_family" ? user.attendeeKind : null,
   };
 }
 
@@ -64,6 +65,7 @@ export async function createUser(data: {
   name: string;
   phone: string;
   role: Role;
+  attendeeKind?: AttendeeKind | null;
   officerTitle?: OfficerTitle | null;
   mustChangePassword?: boolean;
 }): Promise<User> {
@@ -76,6 +78,7 @@ export async function createUser(data: {
     phone,
     mustChangePassword: data.mustChangePassword ?? true,
     role: data.role,
+    attendeeKind: data.role === "ATTENDEE" ? data.attendeeKind ?? "guest" : null,
     officerTitle: data.officerTitle ?? null,
     createdAt: new Date().toISOString(),
   };
@@ -102,11 +105,18 @@ export async function updateOfficerTitle(userId: string, officerTitle: OfficerTi
   await usersCol.doc(userId).update({ officerTitle });
 }
 
-/** 로그인 계정 (목사·관리자·가장). */
+export async function setUserRole(userId: string, role: Role, attendeeKind: AttendeeKind | null) {
+  await usersCol.doc(userId).update({
+    role,
+    attendeeKind: role === "ATTENDEE" ? attendeeKind ?? "guest" : null,
+  });
+}
+
+/** 로그인 계정 (목사·관리자·가장·리더모임 참석). */
 export async function listLoginUsersForServing(): Promise<User[]> {
   const snap = await usersCol.get();
   return snap.docs
     .map((doc) => withUserDefaults(withId(doc)))
-    .filter((u) => u.role === "PASTOR" || u.role === "LEADER" || u.role === "ADMIN")
+    .filter((u) => u.role === "PASTOR" || u.role === "LEADER" || u.role === "ADMIN" || u.role === "ATTENDEE")
     .sort((a, b) => a.name.localeCompare(b.name, "ko"));
 }

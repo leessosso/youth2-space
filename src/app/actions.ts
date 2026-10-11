@@ -29,6 +29,7 @@ import {
   getUserByEmail,
   getUserById,
   isPhoneUsedByAnotherUser,
+  setUserRole,
 } from "@/lib/store/users";
 import {
   notifyPastorsAndAdminsOfFamilyReport,
@@ -83,10 +84,13 @@ import { OFFICER_TITLES, type OfficerTitle } from "@/lib/types";
 import type {
   AnnouncementAudience,
   AttendanceStatus,
+  AttendeeKind,
   MeetingAssetKind,
+  Role,
   ServingDutyKey,
   SurveyQuestion,
   SurveyQuestionType,
+  User,
 } from "@/lib/types";
 
 const MAX_SURVEY_QUESTIONS = 6;
@@ -271,7 +275,14 @@ function readAccountCredentials(formData: FormData) {
   return { ok: true as const, email, phone: normalizePhone(phoneRaw), password };
 }
 
-async function createLeaderNamedAccount(input: { name: string; email: string; phone: string; password: string }) {
+async function createNamedAccount(input: {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  role: Role;
+  attendeeKind: AttendeeKind | null;
+}) {
   const existing = await getUserByEmail(input.email);
   if (existing) return { ok: false as const, error: "이미 등록된 이메일입니다." };
   if (await isPhoneUsedByAnotherUser(input.phone)) {
@@ -282,10 +293,26 @@ async function createLeaderNamedAccount(input: { name: string; email: string; ph
     passwordHash: await hashPassword(input.password),
     name: input.name,
     phone: input.phone,
-    role: "LEADER",
+    role: input.role,
+    attendeeKind: input.attendeeKind,
     mustChangePassword: true,
   });
   return { ok: true as const, user };
+}
+
+async function createLeaderNamedAccount(input: { name: string; email: string; phone: string; password: string }) {
+  return createNamedAccount({ ...input, role: "LEADER", attendeeKind: null });
+}
+
+async function promoteAttendeeToLeader(user: User): Promise<User> {
+  if (user.role !== "ATTENDEE") return user;
+  await setUserRole(user.id, "LEADER", null);
+  return { ...user, role: "LEADER", attendeeKind: null };
+}
+
+function parseAttendeeKind(value: FormDataEntryValue | null): AttendeeKind | null {
+  if (value === "guest" || value === "new_family") return value;
+  return null;
 }
 
 /** 성도를 리더 계정과 연결한다. 계정이 없으면 만들고, 있으면 그 계정을 쓴다. */
@@ -296,10 +323,10 @@ async function resolveLeaderForMember(formData: FormData) {
 
   if (member.userId) {
     const user = await getUserById(member.userId);
-    if (!user || user.role !== "LEADER") {
+    if (!user || (user.role !== "LEADER" && user.role !== "ATTENDEE")) {
       return { ok: false as const, error: "이 성도에 연결된 계정을 가장·임원으로 쓸 수 없습니다." };
     }
-    return { ok: true as const, user, member };
+    return { ok: true as const, user: await promoteAttendeeToLeader(user), member };
   }
 
   const mode = String(formData.get("accountMode") ?? "");
@@ -308,7 +335,7 @@ async function resolveLeaderForMember(formData: FormData) {
     if (!linkUserId) return { ok: false as const, error: "연결할 계정을 선택해 주세요." };
     const linked = await linkMemberToLeader(member.id, linkUserId);
     if (!linked.ok) return linked;
-    return { ok: true as const, user: linked.user, member: linked.member };
+    return { ok: true as const, user: await promoteAttendeeToLeader(linked.user), member: linked.member };
   }
 
   const credentials = readAccountCredentials(formData);
@@ -326,8 +353,8 @@ async function linkMemberToLeader(memberId: string, userId: string) {
     return { ok: false as const, error: "이 성도는 이미 다른 계정과 연결되어 있습니다." };
   }
   const user = await getUserById(userId);
-  if (!user || user.role !== "LEADER") {
-    return { ok: false as const, error: "리더 계정을 선택해 주세요." };
+  if (!user || (user.role !== "LEADER" && user.role !== "ATTENDEE")) {
+    return { ok: false as const, error: "연결할 수 있는 계정이 아닙니다." };
   }
   const taken = await getMemberByUserId(user.id);
   if (taken && taken.id !== member.id) {
@@ -347,6 +374,74 @@ async function assertLeaderIsFree(userId: string, exceptGroupId?: string) {
   const other = currentGroups.find((group) => group.id !== exceptGroupId && group.currentLeaderId === userId);
   if (!other) return { ok: true as const };
   return { ok: false as const, error: `이 사람은 이미 ${other.name} 가장입니다.` };
+}
+
+/** 성도에게 리더모임 참석 계정을 만든다. 게스트는 가끔 앉고, 새가족팀원은 매주 나온다. */
+export async function grantMeetingAttendance(formData: FormData) {
+  if (!(await requireAppManager())) return { ok: false as const, error: "권한이 없습니다." };
+  const kind = parseAttendeeKind(formData.get("attendeeKind"));
+  if (!kind) return { ok: false as const, error: "게스트 또는 새가족팀원을 선택해 주세요." };
+
+  const memberId = String(formData.get("memberId") ?? "").trim();
+  const member = memberId ? await getMemberById(memberId) : null;
+  if (!member) return { ok: false as const, error: "성도를 선택해 주세요." };
+
+  if (member.userId) {
+    const user = await getUserById(member.userId);
+    if (!user || user.role !== "ATTENDEE") {
+      return { ok: false as const, error: "이 성도는 이미 가장·임원 계정이 있습니다." };
+    }
+    if (user.attendeeKind !== kind) await setUserRole(user.id, "ATTENDEE", kind);
+    revalidatePath("/admin/members");
+    return { ok: true as const };
+  }
+
+  const mode = String(formData.get("accountMode") ?? "");
+  if (mode === "existing") {
+    const linkUserId = String(formData.get("linkUserId") ?? "").trim();
+    if (!linkUserId) return { ok: false as const, error: "연결할 계정을 선택해 주세요." };
+    const user = await getUserById(linkUserId);
+    if (!user || user.role !== "ATTENDEE") {
+      return { ok: false as const, error: "게스트·새가족팀원 계정을 선택해 주세요." };
+    }
+    const linked = await linkMemberToLeader(member.id, user.id);
+    if (!linked.ok) return linked;
+    if (user.attendeeKind !== kind) await setUserRole(user.id, "ATTENDEE", kind);
+    revalidatePath("/admin/members");
+    return { ok: true as const };
+  }
+
+  const credentials = readAccountCredentials(formData);
+  if (!credentials.ok) return credentials;
+  const created = await createNamedAccount({
+    name: member.name,
+    email: credentials.email,
+    phone: credentials.phone,
+    password: credentials.password,
+    role: "ATTENDEE",
+    attendeeKind: kind,
+  });
+  if (!created.ok) return created;
+  await linkMemberUser(member.id, created.user.id);
+  revalidatePath("/admin/members");
+  return { ok: true as const };
+}
+
+export async function setMeetingAttendeeKind(formData: FormData) {
+  if (!(await requireAppManager())) return { ok: false as const, error: "권한이 없습니다." };
+  const kind = parseAttendeeKind(formData.get("attendeeKind"));
+  if (!kind) return { ok: false as const, error: "게스트 또는 새가족팀원을 선택해 주세요." };
+
+  const memberId = String(formData.get("memberId") ?? "").trim();
+  const member = memberId ? await getMemberById(memberId) : null;
+  if (!member?.userId) return { ok: false as const, error: "연결된 계정이 없습니다." };
+  const user = await getUserById(member.userId);
+  if (!user || user.role !== "ATTENDEE") {
+    return { ok: false as const, error: "리더모임 참석 계정만 구분할 수 있습니다." };
+  }
+  if (user.attendeeKind !== kind) await setUserRole(user.id, "ATTENDEE", kind);
+  revalidatePath("/admin/members");
+  return { ok: true as const };
 }
 
 export async function linkMemberAccount(formData: FormData) {

@@ -50,6 +50,7 @@ const CARDS_BY_PERSONA: Record<PlatformPersona, HomeCardId[]> = {
   new_family_lead: ["new_family_group", "upcoming_meeting"],
   training_manager: ["training_attendance_overview", "training_participants"],
   training_participant: ["training_self_checkin"],
+  meeting_attendee: ["upcoming_meeting"],
 };
 
 export type HomeCardBuildContext = {

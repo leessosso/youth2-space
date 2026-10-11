@@ -70,7 +70,7 @@ export default async function MeetingDetailPage({
         <h2 className="mt-2 text-xl font-semibold">{meeting.title}</h2>
         <p className="text-sm text-stone-600">{formatDateTimeKo(meeting.date)}</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          참석: 가장 · 임원 · 게스트(부가장·사역팀장) · 목사
+          참석: 가장 · 임원 · 새가족팀원 · 게스트 · 목사
         </p>
       </div>
 
@@ -172,7 +172,7 @@ export default async function MeetingDetailPage({
               meetingId={id}
               kind="LESSON_COMMENTARY"
               label="교안 해설지 업로드"
-              hint="업로드 직후 비공개입니다. 가장에게 보이려면 「공개」를 눌러 주세요."
+              hint="업로드 직후 비공개입니다. 공개를 누르면 모임에 앉은 사람에게 보입니다."
             />
           )}
         </div>

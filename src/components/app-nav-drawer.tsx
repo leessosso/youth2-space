@@ -29,9 +29,11 @@ const linkActive = "bg-primary/10 font-medium text-primary";
 export function AppNavDrawer({
   items,
   footer,
+  showPlatform = true,
 }: {
   items: NavItem[];
   footer?: ReactNode;
+  showPlatform?: boolean;
 }) {
   const pathname = usePathname();
   const [openForPath, setOpenForPath] = useState<string | null>(null);
@@ -91,17 +93,19 @@ export function AppNavDrawer({
             })}
           </ul>
         </nav>
-        <div className="border-t border-border px-3 py-4">
-          <p className="mb-2 px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            플랫폼
-          </p>
-          <a href={TRAINING_SSO_ENTRY_PATH} className={`${linkBase} ${linkInactive}`}>
-            훈련으로 가기
-          </a>
-          <a href={TONGDOK_SSO_ENTRY_PATH} className={`${linkBase} ${linkInactive}`}>
-            통독으로 가기
-          </a>
-        </div>
+        {showPlatform && (
+          <div className="border-t border-border px-3 py-4">
+            <p className="mb-2 px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              플랫폼
+            </p>
+            <a href={TRAINING_SSO_ENTRY_PATH} className={`${linkBase} ${linkInactive}`}>
+              훈련으로 가기
+            </a>
+            <a href={TONGDOK_SSO_ENTRY_PATH} className={`${linkBase} ${linkInactive}`}>
+              통독으로 가기
+            </a>
+          </div>
+        )}
         {footer ? (
           <div className="border-t border-border px-3 py-4">{footer}</div>
         ) : null}

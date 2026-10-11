@@ -4,6 +4,8 @@ import { useState } from "react";
 import { linkMemberAccount } from "@/app/actions";
 import { UnlinkedLeaderLinks, type UnlinkedLeaderChoice } from "@/components/member-account-form";
 import { Badge, Card, CardHeader } from "@/components/ui";
+import { accountLabel } from "@/lib/format";
+import type { AttendeeKind, Role } from "@/lib/types";
 
 type RosterMember = {
   id: string;
@@ -20,6 +22,7 @@ export function MemberRosterLists({
   leaderIds,
   officerTitles,
   groupNames,
+  accounts,
 }: {
   members: RosterMember[];
   unlinkedLeaders: UnlinkedLeaderChoice[];
@@ -27,6 +30,7 @@ export function MemberRosterLists({
   leaderIds: string[];
   officerTitles: Record<string, string>;
   groupNames: Record<string, string>;
+  accounts: Record<string, { role: Role; attendeeKind: AttendeeKind | null }>;
 }) {
   const serverStamp = [
     initialMembers.map((member) => `${member.id}:${member.userId ?? ""}:${member.groupId}`).join(","),
@@ -54,9 +58,15 @@ export function MemberRosterLists({
 
   function memberBadges(member: RosterMember) {
     const title = member.userId ? officerTitles[member.userId] : undefined;
+    const account = member.userId ? accounts[member.userId] : undefined;
     return (
       <span className="flex flex-wrap items-center gap-1">
-        {member.userId && <Badge>계정</Badge>}
+        {account?.role === "ATTENDEE" && (
+          <Badge tone={account.attendeeKind === "new_family" ? "blue" : "neutral"}>
+            {accountLabel(account)}
+          </Badge>
+        )}
+        {account && account.role !== "ATTENDEE" && <Badge>계정</Badge>}
         {member.userId && leaderIdSet.has(member.userId) && <Badge tone="green">가장</Badge>}
         {title && <Badge tone="blue">{title}</Badge>}
       </span>
@@ -76,7 +86,7 @@ export function MemberRosterLists({
         <Card>
           <CardHeader
             title={`성도와 연결되지 않은 계정 ${leaders.length}명`}
-            subtitle="가장·임원으로 쓰려면 성도 한 명과 연결합니다. 전화번호가 같은 성도는 목록 위에 표시됩니다."
+            subtitle="가장·임원·리더모임 참석으로 쓰려면 성도 한 명과 연결합니다. 전화번호가 같은 성도는 목록 위에 표시됩니다."
           />
           <UnlinkedLeaderLinks
             leaders={leaders}

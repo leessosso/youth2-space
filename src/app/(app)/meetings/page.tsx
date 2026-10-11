@@ -20,7 +20,7 @@ export default async function MeetingsPage() {
       <div>
         <h2 className="text-xl font-semibold">리더모임</h2>
         <p className="text-sm text-stone-600">
-          매주 기도회, 말씀 교안 나눔, 교안 해설, 그 주 광고 순으로 진행합니다. 나눔에는 가장, 임원, 게스트(부가장·사역팀장)가 함께합니다.
+          매주 기도회, 말씀 교안 나눔, 교안 해설, 그 주 광고 순으로 진행합니다. 나눔에는 가장, 임원, 새가족팀원, 게스트(부가장·형제자매)가 함께합니다.
         </p>
       </div>
 

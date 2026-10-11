@@ -19,6 +19,7 @@ export type UnlinkedLeaderChoice = {
   name: string;
   email: string;
   phone: string | null;
+  detail?: string;
 };
 
 const selectClass =
@@ -372,6 +373,7 @@ function LeaderLinkRow({
       <div>
         <p className="text-sm font-medium text-foreground">{leader.name}</p>
         <p className="text-xs text-muted-foreground">
+          {leader.detail ? `${leader.detail} · ` : ""}
           {leader.email}
           {leader.phone ? ` · ${leader.phone}` : ""}
         </p>

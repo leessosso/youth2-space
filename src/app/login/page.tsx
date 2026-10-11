@@ -39,7 +39,7 @@ export default async function LoginPage({
             <span className="hidden lg:inline">로그인</span>
           </h1>
           <p className="mt-2 text-sm text-stone-600">
-            가장·임원·목사 전용 운영 도구입니다.
+            가장·임원·목사와, 리더모임 게스트·새가족팀원이 들어갑니다.
           </p>
         </div>
         {errorMessage ? (
