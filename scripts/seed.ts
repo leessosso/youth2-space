@@ -54,7 +54,7 @@ async function main() {
 
   const pastorId = await addUser({
     email: "pastor@church.demo",
-    name: "김목사",
+    name: "정목사",
     phone: "01010000001",
     role: "PASTOR",
   });
