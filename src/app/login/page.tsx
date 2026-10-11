@@ -94,10 +94,9 @@ export default async function LoginPage({
           <Button type="submit" className="w-full">로그인</Button>
         </form>
         <div className="mt-6 rounded-lg bg-background p-4 text-xs text-stone-600">
-          <p className="font-medium text-stone-800">데모 계정 (로컬 시드)</p>
+          <p className="font-medium text-stone-800">처음 로그인 안내</p>
           <ul className="mt-2 space-y-1">
-            <li>목사: 이름 <span className="font-medium text-stone-800">정목사</span></li>
-            <li>2026 회장: 이름 <span className="font-medium text-stone-800">임범석</span></li>
+            <li>아이디: <span className="font-medium text-stone-800">본인 이름</span></li>
             <li>비밀번호: demo1234</li>
           </ul>
         </div>
