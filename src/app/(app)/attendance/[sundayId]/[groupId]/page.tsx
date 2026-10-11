@@ -101,10 +101,10 @@ export default async function AttendanceGroupPage({
                   ) : (
                     <>
                       <th className="px-2 py-2">4부</th>
+                      <th className="px-2 py-2">가족모임</th>
                       {canEditQr && <th className="px-2 py-2">4부 QR</th>}
                       <th className="px-2 py-2">1-3부</th>
                       {canEditQr && <th className="px-2 py-2">1-3부 QR</th>}
-                      <th className="px-2 py-2">가족모임</th>
                     </>
                   )}
                 </tr>
@@ -139,6 +139,13 @@ export default async function AttendanceGroupPage({
                           <td className="px-2 py-2">
                             <AttendanceChoice name={`s4_${m.id}`} defaultStatus={s4Status} />
                           </td>
+                          <td className="px-2 py-2">
+                            <input
+                              type="checkbox"
+                              name={`family_${m.id}`}
+                              defaultChecked={mark?.familyMeeting ?? false}
+                            />
+                          </td>
                           {canEditQr && (
                             <td className="px-2 py-2">
                               <input
@@ -160,13 +167,6 @@ export default async function AttendanceGroupPage({
                               />
                             </td>
                           )}
-                          <td className="px-2 py-2">
-                            <input
-                              type="checkbox"
-                              name={`family_${m.id}`}
-                              defaultChecked={mark?.familyMeeting ?? false}
-                            />
-                          </td>
                         </>
                       )}
                     </tr>
