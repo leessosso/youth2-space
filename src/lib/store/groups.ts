@@ -6,7 +6,7 @@ import {
   withId,
 } from "@/lib/store/collections";
 import { getCurrentTerm } from "@/lib/store/settings";
-import { getUsersByIds } from "@/lib/store/users";
+import { getUserById, getUsersByIds } from "@/lib/store/users";
 import { sameTerm, type Term } from "@/lib/term";
 import type { Group, GroupLeaderTerm, Member } from "@/lib/types";
 
@@ -65,11 +65,50 @@ function asMember(id: string, data: Partial<Omit<Member, "id">> | undefined): Me
   };
 }
 
-export async function listMembersByGroup(groupId: string): Promise<Member[]> {
+async function queryMembersByGroup(groupId: string): Promise<Member[]> {
   const snap = await membersCol.where("groupId", "==", groupId).get();
   return snap.docs
     .map((doc) => asMember(doc.id, doc.data()))
     .sort((a, b) => a.name.localeCompare(b.name, "ko"));
+}
+
+/**
+ * 이번 학기 가장은 그 가족 가족원이어야 출석·조사 명단에 본인이 나온다.
+ * 성도 기록이 다른 가족에 있거나 없으면, 명단을 읽기 전에 이 가족으로 맞춘다.
+ * 지난 학기 가족은 건드리지 않는다.
+ */
+async function ensureCurrentLeaderIsMember(groupId: string): Promise<void> {
+  const group = await getGroupById(groupId);
+  if (!group?.currentLeaderId) return;
+  const term = await getCurrentTerm();
+  if (!sameTerm(groupTerm(group), term)) return;
+
+  const members = await queryMembersByGroup(groupId);
+  if (members.some((member) => member.userId === group.currentLeaderId)) return;
+
+  const user = await getUserById(group.currentLeaderId);
+  const name = user?.name?.trim();
+  if (!user || !name) return;
+
+  const sameName = members.find((member) => member.name.trim() === name && !member.userId);
+  if (sameName) {
+    await linkMemberUser(sameName.id, user.id);
+    return;
+  }
+
+  const linked = await getMemberByUserId(group.currentLeaderId);
+  if (linked) {
+    if (linked.groupId !== groupId) await assignMemberToGroup(linked.id, groupId);
+    return;
+  }
+
+  const created = await createMember(groupId, name, user.phone);
+  await linkMemberUser(created.id, user.id);
+}
+
+export async function listMembersByGroup(groupId: string): Promise<Member[]> {
+  await ensureCurrentLeaderIsMember(groupId);
+  return queryMembersByGroup(groupId);
 }
 
 export const listAllMembers = cache(async (): Promise<Member[]> => {
