@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { isMeetingAttendee } from "@/lib/types";
 import { getUserById } from "@/lib/store/users";
 import { resolveSsoSubjectFromSession } from "@/lib/platform/sso-subject";
 import {
@@ -57,6 +58,10 @@ export async function GET(request: Request) {
       reason: "must-change-password",
     });
     return applyServerTiming(NextResponse.redirect(changeUrl), header);
+  }
+
+  if (isMeetingAttendee(session.user.role)) {
+    return NextResponse.redirect(new URL("/meetings", request.url));
   }
 
   if (!isTongdokSsoConfigured()) {

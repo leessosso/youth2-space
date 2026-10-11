@@ -1,7 +1,7 @@
 "use client";
 
 import type { User } from "@/lib/types";
-import { roleLabel } from "@/lib/format";
+import { accountLabel } from "@/lib/format";
 
 type Props = {
   users: User[];
@@ -27,7 +27,7 @@ export function AnnouncementUserPicker({ users, defaultSelectedIds = [] }: Props
           />
           <span className="font-medium">{u.name}</span>
           <span className="text-muted-foreground">
-            {roleLabel(u.role)}
+            {accountLabel(u)}
             {u.officerTitle ? ` · ${u.officerTitle}` : ""}
           </span>
         </label>

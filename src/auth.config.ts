@@ -1,5 +1,24 @@
 import type { NextAuthConfig } from "next-auth";
 import { isTongdokShellPublicPath } from "@/lib/platform/tongdok-proxy";
+import { isMeetingAttendee } from "@/lib/types";
+
+const MEETING_ATTENDEE_BLOCKED = [
+  "/attendance",
+  "/reports",
+  "/surveys",
+  "/groups",
+  "/admin",
+  "/worship",
+  "/my-group",
+  "/hat/admin",
+  "/announcements/new",
+  "/training",
+  "/tongdok",
+];
+
+function isBlockedForMeetingAttendee(path: string) {
+  return MEETING_ATTENDEE_BLOCKED.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
+}
 
 export const authConfig: NextAuthConfig = {
   secret: process.env.AUTH_SECRET ?? (process.env.NODE_ENV === "production" ? undefined : "dev-only-auth-secret"),
@@ -45,6 +64,10 @@ export const authConfig: NextAuthConfig = {
 
       if (isLoggedIn && isChangePassword && !mustChange) {
         return Response.redirect(new URL("/dashboard", request.nextUrl));
+      }
+
+      if (isLoggedIn && auth?.user?.role && isMeetingAttendee(auth.user.role) && isBlockedForMeetingAttendee(path)) {
+        return Response.redirect(new URL("/meetings", request.nextUrl));
       }
 
       return true;

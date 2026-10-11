@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { signOut } from "@/auth";
 import type { OfficerTitle, Role } from "@/lib/types";
-import { canManageApp } from "@/lib/types";
+import { canManageApp, isMeetingAttendee } from "@/lib/types";
 import { FitText } from "@/components/fit-text";
 import { AppMain } from "@/components/app-main";
 import { AppNav, type NavItem } from "@/components/app-nav";
@@ -15,6 +15,14 @@ function navFor(
   user: { role: Role; officerTitle: OfficerTitle | null },
   familyReportHref: string,
 ): NavItem[] {
+  if (isMeetingAttendee(user.role)) {
+    return [
+      { href: "/dashboard", label: "홈" },
+      { href: "/meetings", label: "리더모임" },
+      { href: "/announcements", label: "공지" },
+      { href: SORTING_HAT_USER_PATH, label: "배정모자" },
+    ];
+  }
   const manages = canManageApp(user);
   const items: NavItem[] = [
     { href: "/dashboard", label: "홈" },
@@ -80,10 +88,12 @@ export function AppShell({
           </Link>
         </div>
         <LeaderAxisChrome leaderNav={<AppNav items={nav} variant="desktop" />} />
-        <div className="space-y-0.5 border-t border-border px-3 py-3">
-          <PlatformTrainingLink />
-          <PlatformTongdokLink />
-        </div>
+        {!isMeetingAttendee(user.role) && (
+          <div className="space-y-0.5 border-t border-border px-3 py-3">
+            <PlatformTrainingLink />
+            <PlatformTongdokLink />
+          </div>
+        )}
         <div className="mt-auto border-t border-border px-3 py-4">
           <p className="truncate px-3 text-sm font-medium">{user.name}</p>
           <LogoutButton className="mt-2" />
@@ -103,7 +113,13 @@ export function AppShell({
               {user.name}
             </p>
             <LeaderAxisChrome
-              leaderNav={<AppNavDrawer items={nav} footer={<LogoutButton />} />}
+              leaderNav={
+                <AppNavDrawer
+                  items={nav}
+                  showPlatform={!isMeetingAttendee(user.role)}
+                  footer={<LogoutButton />}
+                />
+              }
             />
           </div>
         </header>

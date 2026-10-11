@@ -1,7 +1,12 @@
-/** 로그인 계정 역할. 목사/관리자는 시스템 전체, LEADER는 현장 리더(가장 또는 임원, 겸임 가능). */
-export type Role = "PASTOR" | "LEADER" | "ADMIN";
+/** 로그인 계정 역할. 목사/관리자는 시스템 전체, LEADER는 현장 리더(가장 또는 임원, 겸임 가능). ATTENDEE는 리더모임만 보는 계정. */
+export type Role = "PASTOR" | "LEADER" | "ADMIN" | "ATTENDEE";
 
-export const ROLES: Role[] = ["PASTOR", "LEADER", "ADMIN"];
+export const ROLES: Role[] = ["PASTOR", "LEADER", "ADMIN", "ATTENDEE"];
+
+/** 리더모임 참석 구분. 게스트는 가끔 앉고, 새가족팀원은 매주 나온다. 앱에서 보는 범위는 같다. */
+export type AttendeeKind = "guest" | "new_family";
+
+export const ATTENDEE_KINDS: AttendeeKind[] = ["guest", "new_family"];
 
 /** 2청년회 임원 8직책. 가장을 겸임할 수 있다. */
 export const OFFICER_TITLES = [
@@ -50,6 +55,8 @@ export type User = {
   /** 운영자가 설정한 초기 비밀번호로 첫 로그인 시 true. 변경 후 false. */
   mustChangePassword?: boolean;
   role: Role;
+  /** ATTENDEE일 때만 guest | new_family. 그 외 역할은 null. */
+  attendeeKind: AttendeeKind | null;
   officerTitle: OfficerTitle | null;
   createdAt: string;
 };
@@ -71,7 +78,7 @@ export type Member = {
   name: string;
   phone: string | null;
   createdAt: string;
-  /** 로그인 계정. 가장·임원만 연결되고, 계정이 없는 성도는 null. */
+  /** 로그인 계정. 가장·임원·리더모임 참석자만 연결되고, 계정이 없는 성도는 null. */
   userId: string | null;
 };
 
@@ -169,6 +176,11 @@ export type PastoralMessage = {
 
 export function isPastorOrAdmin(role: Role) {
   return role === "PASTOR" || role === "ADMIN";
+}
+
+/** 리더모임 게스트·새가족팀원. 출석·돌봄카드·참여조사·운영 화면은 열지 않는다. */
+export function isMeetingAttendee(role: Role) {
+  return role === "ATTENDEE";
 }
 
 /** 앱 운영: 목사·관리자, 또는 2청년회 임원 8직책. 임원이 아닌 가장은 불가. */
