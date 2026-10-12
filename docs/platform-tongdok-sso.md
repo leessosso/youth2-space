@@ -46,6 +46,7 @@ Location은 same-origin `/tongdok/sso/consume`을 유지한다. `TONGDOK_ORIGIN`
 | `iss` | `youth2-space` (`TRAINING_SSO_ISSUER`) |
 | `aud` | `tongdok` |
 | `sub` | Firestore `User.id` |
+| `jti` | 티켓마다 새 UUID (1회용 검증용, 소비자가 무시해도 호환) |
 | `name` | 로그인 계정 이름 |
 | `phone` | 정규화된 전화(`normalizePhone`) 또는 `null` |
 | `role` | `PASTOR` \| `LEADER` \| `ADMIN` (참고용. 통독 권한 저장소를 만들지 않음) |
@@ -81,3 +82,9 @@ Location은 same-origin `/tongdok/sso/consume`을 유지한다. `TONGDOK_ORIGIN`
 2. basePath 기준 `src/app/sso/consume` (브라우저 URL `/tongdok/sso/consume`)에서 `ticket` 쿼리를 HS256으로 검증 (`iss=youth2-space`, `aud=tongdok`, `exp` 120초).
 3. 검증 성공 시 통독 자체 세션을 열고, 실패·쿼리 없음은 기존 통독 로그인(또는 공개 홈)으로 둔다. 셸은 비로그인 `/tongdok`을 막지 않는다.
 4. 멤버 마스터나 권한 관리 화면은 이 셸 단계에 없다. `sub`/`name`/`phone`/`role`만 받는다.
+
+
+## 캐시·신선도
+
+- 진입 응답(307 포함)은 항상 `Cache-Control: no-store, private, max-age=0` — 브라우저·CDN 캐시 금지.
+- 진입마다 새 `iat`/`exp`/`jti`로 티켓을 발급한다. 소비자는 들어온 `sub`가 현재 세션과 다르면 세션을 교체하고, `jti` 재사용은 거부하는 것을 권장한다.

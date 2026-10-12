@@ -21,6 +21,10 @@ export type TrainingSsoClaims = {
   name: string;
   phone: string | null;
   role: Role;
+  /** 티켓마다 새 UUID. 소비자는 1회용 검증(재사용 거부)에 쓸 수 있다. */
+  jti: string;
+  iat: number;
+  exp: number;
 };
 
 function secretKey(): Uint8Array | null {
@@ -55,6 +59,7 @@ export async function mintTrainingSsoTicket(
     .setIssuer(TRAINING_SSO_ISSUER)
     .setAudience(TRAINING_SSO_AUDIENCE)
     .setSubject(user.id)
+    .setJti(crypto.randomUUID())
     .setIssuedAt(now)
     .setExpirationTime(now + TRAINING_SSO_TTL_SECONDS)
     .sign(key);

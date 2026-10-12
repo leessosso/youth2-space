@@ -98,6 +98,17 @@ export function applyServerTiming(
   return response;
 }
 
+/**
+ * SSO 응답(티켓 307 포함)은 사용자별·1회용이므로 브라우저/CDN 어디에도 캐시하지 않는다.
+ */
+export function applyNoStore<T extends Response>(response: T): T {
+  response.headers.set("Cache-Control", "no-store, private, max-age=0");
+  response.headers.set("Pragma", "no-cache");
+  response.headers.set("Expires", "0");
+  response.headers.set("Vary", "Cookie");
+  return response;
+}
+
 export function nowMs(): number {
   return performance.now();
 }
