@@ -59,7 +59,7 @@
 | `jti` | 티켓마다 새 UUID (1회용 검증용, 소비자가 무시해도 호환) |
 | `name` | 로그인 계정 이름 |
 | `phone` | 정규화된 전화(`normalizePhone`) 또는 `null` |
-| `role` | `PASTOR` \| `LEADER` \| `ADMIN` (참고용, 훈련 `is_admin`과 무관) |
+| `role` | `PASTOR` \| `LEADER` \| `ADMIN` \| `MEMBER` (일반 성도. ATTENDEE는 티켓 없이 `/meetings`로 보냄. 참고용, 훈련 `is_admin`과 무관) |
 | `exp` | 발급 후 120초 |
 
 ## 핸드오프 (같은 호스트)

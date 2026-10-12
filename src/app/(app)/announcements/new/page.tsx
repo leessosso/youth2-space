@@ -5,8 +5,10 @@ import { getUserById, listLoginUsersForServing } from "@/lib/store/users";
 import { createAnnouncement } from "@/app/actions";
 import { auth } from "@/auth";
 import { canManageAnnouncements } from "@/lib/types";
+import { requireLeaderTier } from "@/lib/auth";
 
 export default async function NewAnnouncementPage() {
+  await requireLeaderTier();
   const session = await auth();
   const fullUser = await getUserById(session!.user.id);
   if (!fullUser || !canManageAnnouncements(fullUser)) {

@@ -1,4 +1,5 @@
 import type { PlatformPersona } from "@/lib/platform/roles";
+import { TONGDOK_SSO_ENTRY_PATH } from "@/lib/platform/tongdok-sso-constants";
 import { TRAINING_SSO_ENTRY_PATH } from "@/lib/platform/training-sso-constants";
 
 export type HomeCardId =
@@ -11,7 +12,10 @@ export type HomeCardId =
   | "upcoming_meeting"
   | "care"
   | "training_hub"
-  | "members_officers";
+  | "members_officers"
+  | "member_training"
+  | "member_tongdok"
+  | "my_info";
 
 export type HomeCardVariant = "default" | "emphasis";
 
@@ -36,6 +40,9 @@ const CARD_ORDER: HomeCardId[] = [
   "care",
   "training_hub",
   "members_officers",
+  "member_training",
+  "member_tongdok",
+  "my_info",
 ];
 
 const CARDS_BY_PERSONA: Record<PlatformPersona, HomeCardId[]> = {
@@ -51,6 +58,7 @@ const CARDS_BY_PERSONA: Record<PlatformPersona, HomeCardId[]> = {
   training_manager: ["training_attendance_overview", "training_participants"],
   training_participant: ["training_self_checkin"],
   meeting_attendee: ["upcoming_meeting"],
+  member: ["member_training", "member_tongdok", "my_info"],
 };
 
 export type HomeCardBuildContext = {
@@ -153,6 +161,27 @@ function cardDefinitions(ctx: HomeCardBuildContext): Record<HomeCardId, HomeCard
       title: "훈련 프로그램",
       description: "훈련 프로그램 운영·출석 메뉴로 이동합니다.",
       href: TRAINING_SSO_ENTRY_PATH,
+      variant: "default",
+    },
+    member_training: {
+      id: "member_training",
+      title: "훈련",
+      description: "훈련 프로그램 출석과 일정을 확인합니다.",
+      href: TRAINING_SSO_ENTRY_PATH,
+      variant: "emphasis",
+    },
+    member_tongdok: {
+      id: "member_tongdok",
+      title: "통독",
+      description: "성경 통독 진도를 기록합니다.",
+      href: TONGDOK_SSO_ENTRY_PATH,
+      variant: "emphasis",
+    },
+    my_info: {
+      id: "my_info",
+      title: "내 정보",
+      description: "가족 확인, 비밀번호·전화번호 변경",
+      href: "/me",
       variant: "default",
     },
     members_officers: {

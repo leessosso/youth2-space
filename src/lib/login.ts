@@ -2,11 +2,13 @@ import { verifyPassword } from "@/lib/password";
 import { isPhoneLike, normalizePhone } from "@/lib/phone";
 import { getUserByName, getUsersByPhone } from "@/lib/store/users";
 import type { User } from "@/lib/types";
+import { clearLoginFailures, isLoginLocked, recordLoginFailure } from "@/lib/store/login-throttle";
 
 export type LoginFailureReason =
   | "missing"
   | "email_not_allowed"
   | "duplicate_name"
+  | "locked"
   | "invalid";
 
 export type LoginResolveResult =
@@ -67,6 +69,28 @@ export async function resolveLoginUser(
   }
 
   return byName;
+}
+
+/**
+ * 잠금(5회 실패 → 10분)을 적용한 로그인. 로그인 화면 사전 검사와 Credentials authorize 둘 다 이걸 쓴다
+ * (콜백 URL로 직접 POST해도 잠금이 걸리게).
+ * 동명이인(duplicate_name)은 비밀번호를 확인하지 않은 결과라 실패로 세지 않는다.
+ */
+export async function resolveLoginUserThrottled(
+  identifier: string,
+  password: string,
+): Promise<LoginResolveResult> {
+  const trimmedId = identifier?.trim() ?? "";
+  if (!trimmedId || !password) return { ok: false, reason: "missing" };
+  if (await isLoginLocked(trimmedId)) return { ok: false, reason: "locked" };
+
+  const result = await resolveLoginUser(trimmedId, password);
+  if (result.ok) {
+    await clearLoginFailures(trimmedId);
+  } else if (result.reason === "invalid") {
+    await recordLoginFailure(trimmedId);
+  }
+  return result;
 }
 
 export function userMustChangePassword(user: User): boolean {

@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { authConfig } from "@/auth.config";
-import { resolveLoginUser, userMustChangePassword } from "@/lib/login";
+import { resolveLoginUserThrottled, userMustChangePassword } from "@/lib/login";
 import type { Role } from "@/lib/types";
 
 declare module "next-auth" {
@@ -38,7 +38,7 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
         const password = credentials?.password as string | undefined;
         if (!identifier || !password) return null;
 
-        const result = await resolveLoginUser(identifier, password);
+        const result = await resolveLoginUserThrottled(identifier, password);
         if (!result.ok) return null;
 
         const user = result.user;

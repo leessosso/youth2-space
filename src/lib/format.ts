@@ -17,6 +17,8 @@ export function roleLabel(role: string) {
       return "관리자";
     case "LEADER":
       return "리더";
+    case "MEMBER":
+      return "성도";
     case "ATTENDEE":
       return "참석";
     default:

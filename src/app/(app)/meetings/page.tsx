@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { createLeaderMeeting } from "@/app/actions";
 import { Button, Card, CardHeader, Input, Label, Textarea } from "@/components/ui";
-import { currentUserCanManageApp } from "@/lib/auth";
+import { currentUserCanManageApp, requireLeaderTier } from "@/lib/auth";
 import { formatDateTimeKo } from "@/lib/format";
 import { listMeetings } from "@/lib/store/meetings";
 import type { LeaderMeeting } from "@/lib/types";
 
 export default async function MeetingsPage() {
+  await requireLeaderTier({ allowAttendee: true });
   const canAdmin = await currentUserCanManageApp();
 
   const meetings = await listMeetings();

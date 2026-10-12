@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { isPastorOrAdmin } from "@/lib/auth";
+import { isPastorOrAdmin, requireLeaderTier } from "@/lib/auth";
 import { Card } from "@/components/ui";
 import { getGroupByCurrentLeader, listGroups, listMembersByGroup } from "@/lib/store/groups";
 import { getLatestMessageByGroup } from "@/lib/store/reports";
 import { getUsersByIds } from "@/lib/store/users";
 
 export default async function ReportsPage() {
+  await requireLeaderTier();
   const session = await auth();
   const user = session!.user;
 

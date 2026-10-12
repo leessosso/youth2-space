@@ -1,24 +1,6 @@
 import type { NextAuthConfig } from "next-auth";
 import { isTongdokShellPublicPath } from "@/lib/platform/tongdok-proxy";
-import { isMeetingAttendee } from "@/lib/types";
-
-const MEETING_ATTENDEE_BLOCKED = [
-  "/attendance",
-  "/reports",
-  "/surveys",
-  "/groups",
-  "/admin",
-  "/worship",
-  "/my-group",
-  "/hat/admin",
-  "/announcements/new",
-  "/training",
-  "/tongdok",
-];
-
-function isBlockedForMeetingAttendee(path: string) {
-  return MEETING_ATTENDEE_BLOCKED.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
-}
+import { redirectForRole } from "@/lib/access-policy";
 
 export const authConfig: NextAuthConfig = {
   secret: process.env.AUTH_SECRET ?? (process.env.NODE_ENV === "production" ? undefined : "dev-only-auth-secret"),
@@ -66,8 +48,9 @@ export const authConfig: NextAuthConfig = {
         return Response.redirect(new URL("/dashboard", request.nextUrl));
       }
 
-      if (isLoggedIn && auth?.user?.role && isMeetingAttendee(auth.user.role) && isBlockedForMeetingAttendee(path)) {
-        return Response.redirect(new URL("/meetings", request.nextUrl));
+      if (isLoggedIn) {
+        const blockedTo = redirectForRole(auth?.user?.role, path);
+        if (blockedTo) return Response.redirect(new URL(blockedTo, request.nextUrl));
       }
 
       return true;
@@ -81,6 +64,10 @@ export const authConfig: NextAuthConfig = {
       }
       if (trigger === "update" && session?.user && "mustChangePassword" in session.user) {
         token.mustChangePassword = session.user.mustChangePassword === true;
+      }
+      if (trigger === "update" && session?.user && "phone" in session.user) {
+        const phone = session.user.phone;
+        token.phone = typeof phone === "string" && phone.trim() ? phone : null;
       }
       return token;
     },

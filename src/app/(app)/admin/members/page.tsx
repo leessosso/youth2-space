@@ -5,7 +5,7 @@ import { MemberBulkImport } from "@/components/member-bulk-import";
 import { MeetingAttendancePanel } from "@/components/meeting-attendance-panel";
 import { MemberRosterLists } from "@/components/member-roster-lists";
 import { Button, Card, CardHeader, Input, Label } from "@/components/ui";
-import { currentUserCanManageApp } from "@/lib/auth";
+import { currentUserCanManageApp, requireLeaderTier } from "@/lib/auth";
 import { accountLabel, termLabel } from "@/lib/format";
 import { listAllMembers, listGroups } from "@/lib/store/groups";
 import { listActiveOfficers } from "@/lib/store/officers";
@@ -14,6 +14,7 @@ import { getUsersByIds, listUsersByRole } from "@/lib/store/users";
 import type { AttendeeKind } from "@/lib/types";
 
 export default async function MemberRosterPage() {
+  await requireLeaderTier();
   if (!(await currentUserCanManageApp())) redirect("/dashboard");
 
   const [term, groups, members, leaders, attendees] = await Promise.all([

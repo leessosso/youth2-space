@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { saveSurveyResponses } from "@/app/actions";
 import { Button, Card, CardHeader } from "@/components/ui";
-import { currentUserCanManageApp, leaderCanAccessGroup } from "@/lib/auth";
+import { currentUserCanManageApp, leaderCanAccessGroup, requireLeaderTier } from "@/lib/auth";
 import { formatDateKo } from "@/lib/format";
 import { getGroupById, listMembersByGroup } from "@/lib/store/groups";
 import {
@@ -17,6 +17,7 @@ export default async function SurveyGroupPage({
 }: {
   params: Promise<{ id: string; groupId: string }>;
 }) {
+  await requireLeaderTier();
   const { id, groupId } = await params;
   const session = await auth();
   const user = session!.user;

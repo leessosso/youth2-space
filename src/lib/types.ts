@@ -1,7 +1,10 @@
-/** 로그인 계정 역할. 목사/관리자는 시스템 전체, LEADER는 현장 리더(가장 또는 임원, 겸임 가능). ATTENDEE는 리더모임만 보는 계정. */
-export type Role = "PASTOR" | "LEADER" | "ADMIN" | "ATTENDEE";
+/**
+ * 로그인 계정 역할. 목사/관리자는 시스템 전체, LEADER는 현장 리더(가장 또는 임원, 겸임 가능).
+ * ATTENDEE는 리더모임만 보는 계정. MEMBER는 일반 성도(훈련·통독 바로가기, 내 정보, 공지 읽기, 배정모자).
+ */
+export type Role = "PASTOR" | "LEADER" | "ADMIN" | "ATTENDEE" | "MEMBER";
 
-export const ROLES: Role[] = ["PASTOR", "LEADER", "ADMIN", "ATTENDEE"];
+export const ROLES: Role[] = ["PASTOR", "LEADER", "ADMIN", "ATTENDEE", "MEMBER"];
 
 /** 리더모임 참석 구분. 게스트는 가끔 앉고, 새가족팀원은 매주 나온다. 앱에서 보는 범위는 같다. */
 export type AttendeeKind = "guest" | "new_family";
@@ -183,9 +186,25 @@ export function isMeetingAttendee(role: Role) {
   return role === "ATTENDEE";
 }
 
-/** 앱 운영: 목사·관리자, 또는 2청년회 임원 8직책. 임원이 아닌 가장은 불가. */
+/** 일반 성도 계정. 리더 화면·서버 액션은 모두 거부한다. */
+export function isMember(role: Role) {
+  return role === "MEMBER";
+}
+
+/** 리더 화면을 쓰는 역할: 목사·관리자·가장/임원(LEADER). ATTENDEE·MEMBER는 아니다. */
+export function isLeaderTier(role: Role) {
+  return role === "PASTOR" || role === "ADMIN" || role === "LEADER";
+}
+
+/** 훈련·통독 SSO 바로가기를 쓸 수 있는 역할 (리더모임 참석 계정만 제외). */
+export function canUsePlatformApps(role: Role) {
+  return role !== "ATTENDEE";
+}
+
+/** 앱 운영: 목사·관리자, 또는 2청년회 임원 8직책. 임원이 아닌 가장은 불가. MEMBER·ATTENDEE는 직책이 남아 있어도 불가. */
 export function canManageApp(user: Pick<User, "role" | "officerTitle">): boolean {
   if (isPastorOrAdmin(user.role)) return true;
+  if (!isLeaderTier(user.role)) return false;
   return user.officerTitle != null && OFFICER_TITLES.includes(user.officerTitle);
 }
 

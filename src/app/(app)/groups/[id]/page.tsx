@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { assignMemberToGroup } from "@/app/actions";
 import { Button, Card, CardHeader } from "@/components/ui";
-import { currentUserCanManageApp } from "@/lib/auth";
+import { currentUserCanManageApp, requireLeaderTier } from "@/lib/auth";
 import { formatDateKo, termLabel } from "@/lib/format";
 import {
   getGroupById,
@@ -17,6 +17,7 @@ export default async function GroupDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireLeaderTier();
   const { id } = await params;
   const canAdmin = await currentUserCanManageApp();
 

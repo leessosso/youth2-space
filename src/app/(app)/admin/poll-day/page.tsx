@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { clearPollDayAction, setPollDayAction } from "@/app/actions";
 import { Button, Card, CardHeader, Input, Label } from "@/components/ui";
-import { currentUserCanManageApp } from "@/lib/auth";
+import { currentUserCanManageApp, requireLeaderTier } from "@/lib/auth";
 import { kstDateKeyNow } from "@/lib/kst-date";
 import { isPollBannerDay } from "@/lib/poll-day";
 import { getPollSiteUrl } from "@/lib/poll-site";
@@ -14,6 +14,7 @@ function formatPollDateKey(dateKey: string): string {
 }
 
 export default async function PollDayAdminPage() {
+  await requireLeaderTier();
   if (!(await currentUserCanManageApp())) redirect("/dashboard");
 
   const [settings, seoulToday] = await Promise.all([

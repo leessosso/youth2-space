@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { saveAttendanceMarks } from "@/app/actions";
 import { AttendanceChoice } from "@/components/attendance-choice";
 import { Button, Card, CardHeader } from "@/components/ui";
-import { currentUserCanManageApp, leaderCanAccessGroup } from "@/lib/auth";
+import { currentUserCanManageApp, leaderCanAccessGroup, requireLeaderTier } from "@/lib/auth";
 import { formatDateKo } from "@/lib/format";
 import {
   dateKeyToKstNoonIso,
@@ -26,6 +26,7 @@ export default async function AttendanceGroupPage({
 }: {
   params: Promise<{ sundayId: string; groupId: string }>;
 }) {
+  await requireLeaderTier();
   const { sundayId, groupId } = await params;
   const session = await auth();
   const user = session!.user;

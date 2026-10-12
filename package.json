@@ -11,6 +11,7 @@
     "lint": "eslint",
     "lint:design": "eslint --config eslint.design.config.mjs --max-warnings=0 src",
     "test": "tsx --test tests/*.test.ts",
+    "provision:members": "tsx scripts/provision-members.ts",
     "icons:generate": "node scripts/generate-pwa-icons.mjs"
   },
   "dependencies": {

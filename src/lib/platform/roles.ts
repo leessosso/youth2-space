@@ -1,5 +1,5 @@
 import type { Group, User } from "@/lib/types";
-import { canManageApp, isMeetingAttendee, isPastorOrAdmin } from "@/lib/types";
+import { canManageApp, isMeetingAttendee, isMember, isPastorOrAdmin } from "@/lib/types";
 
 /**
  * §5.4 역할별 홈 카드용 플랫폼 페르소나.
@@ -12,7 +12,9 @@ export type PlatformPersona =
   | "new_family_lead"
   | "training_manager"
   | "training_participant"
-  | "meeting_attendee";
+  | "meeting_attendee"
+  /** 일반 성도: 훈련·통독 바로가기와 내 정보만 */
+  | "member";
 
 export type PlatformRoleContext = {
   user: Pick<User, "id" | "role" | "officerTitle">;
@@ -39,6 +41,10 @@ function isNewFamilyGroup(_group: Group): boolean {
 export function resolvePlatformPersonas(ctx: PlatformRoleContext): PlatformPersona[] {
   const { user, ledGroup } = ctx;
   const personas = new Set<PlatformPersona>();
+
+  if (isMember(user.role)) {
+    return ["member"];
+  }
 
   if (isMeetingAttendee(user.role)) {
     personas.add("meeting_attendee");

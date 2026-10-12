@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { createWorshipService } from "@/app/actions";
 import { Button, Card, CardHeader, Input, Label } from "@/components/ui";
-import { currentUserCanManageApp } from "@/lib/auth";
+import { currentUserCanManageApp, requireLeaderTier } from "@/lib/auth";
 import { formatDateKo } from "@/lib/format";
 import { listAssignmentsByService, listWorshipServices } from "@/lib/store/worship";
 
 export default async function WorshipListPage() {
+  await requireLeaderTier();
   const canAdmin = await currentUserCanManageApp();
 
   const services = await listWorshipServices();

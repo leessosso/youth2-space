@@ -1,7 +1,8 @@
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getGroupById, getMemberById } from "@/lib/store/groups";
 import { getUserById } from "@/lib/store/users";
-import { isPastorOrAdmin, canManageApp, type Role } from "@/lib/types";
+import { isPastorOrAdmin, canManageApp, isLeaderTier, isMeetingAttendee, type Role } from "@/lib/types";
 
 export { isPastorOrAdmin };
 
@@ -17,6 +18,21 @@ export async function getCurrentUser() {
   const session = await auth();
   if (!session?.user?.id) return null;
   return getUserById(session.user.id);
+}
+
+/**
+ * 리더 화면 서버 가드. 미들웨어와 별개로 페이지 첫 줄에서 부른다.
+ * 역할은 JWT가 아니라 Firestore 계정 기준이라, 강등(가장 초기화) 직후에도 바로 막힌다.
+ * `allowAttendee`: 리더모임처럼 ATTENDEE도 보는 화면.
+ */
+export async function requireLeaderTier(options: { allowAttendee?: boolean } = {}) {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+  const user = await getUserById(session.user.id);
+  if (!user) redirect("/login");
+  if (isLeaderTier(user.role)) return user;
+  if (options.allowAttendee && isMeetingAttendee(user.role)) return user;
+  redirect(isMeetingAttendee(user.role) ? "/meetings" : "/dashboard");
 }
 
 export async function currentUserCanManageApp() {
