@@ -4,6 +4,7 @@ import { isMeetingAttendee } from "@/lib/types";
 import { getUserById } from "@/lib/store/users";
 import { resolveSsoSubjectFromSession } from "@/lib/platform/sso-subject";
 import {
+  applyNoStore,
   applyServerTiming,
   formatPartialServerTiming,
   formatServerTiming,
@@ -21,10 +22,16 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 /** Firestore(asia-northeast3)와 가깝게 — 폴백 getUserById·한국 사용자 TTFB. */
 export const preferredRegion = "icn1";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 const ROUTE = "training-sso" as const;
 
 export async function GET(request: Request) {
+  return applyNoStore(await handle(request));
+}
+
+async function handle(request: Request): Promise<Response> {
   const t0 = nowMs();
 
   const tAuth0 = nowMs();

@@ -56,6 +56,7 @@
 | `iss` | `youth2-space` (`TRAINING_SSO_ISSUER`) |
 | `aud` | `class-management` |
 | `sub` | Firestore `User.id` |
+| `jti` | 티켓마다 새 UUID (1회용 검증용, 소비자가 무시해도 호환) |
 | `name` | 로그인 계정 이름 |
 | `phone` | 정규화된 전화(`normalizePhone`) 또는 `null` |
 | `role` | `PASTOR` \| `LEADER` \| `ADMIN` (참고용, 훈련 `is_admin`과 무관) |
@@ -72,3 +73,9 @@
 `/training/*`는 프로덕션에서 class-management로 rewrite됩니다. consume·link 처리는 **훈련 앱** 담당(Phase 1 수업관리 PR). 셸에는 `/training/sso/*` App Router 페이지를 두지 않습니다(rewrite 가림 방지).
 
 기존 `/training` 직접 접속·이름 로그인은 훈련 앱에서 유지합니다.
+
+
+## 캐시·신선도
+
+- 진입 응답(307 포함)은 항상 `Cache-Control: no-store, private, max-age=0` — 브라우저·CDN 캐시 금지.
+- 진입마다 새 `iat`/`exp`/`jti`로 티켓을 발급한다. 소비자는 들어온 `sub`가 현재 세션과 다르면 세션을 교체하고, `jti` 재사용은 거부하는 것을 권장한다.

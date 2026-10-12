@@ -24,6 +24,10 @@ export type TongdokSsoClaims = {
   name: string;
   phone: string | null;
   role: Role;
+  /** 티켓마다 새 UUID. 소비자는 1회용 검증(재사용 거부)에 쓸 수 있다. */
+  jti: string;
+  iat: number;
+  exp: number;
 };
 
 function secretKey(): Uint8Array | null {
@@ -58,6 +62,7 @@ export async function mintTongdokSsoTicket(
     .setIssuer(TRAINING_SSO_ISSUER)
     .setAudience(TONGDOK_SSO_AUDIENCE)
     .setSubject(user.id)
+    .setJti(crypto.randomUUID())
     .setIssuedAt(now)
     .setExpirationTime(now + TONGDOK_SSO_TTL_SECONDS)
     .sign(key);
