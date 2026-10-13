@@ -27,7 +27,7 @@ function CardHrefLink({
   );
 }
 
-function HomeCardLink({ card }: { card: HomeCard }) {
+export function HomeCardLink({ card }: { card: HomeCard }) {
   if (card.variant === "emphasis") {
     return (
       <CardHrefLink
