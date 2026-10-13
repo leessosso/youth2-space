@@ -7,7 +7,9 @@ import { formatDateKo } from "@/lib/format";
 import {
   dateKeyToKstNoonIso,
   kstDateKeyFromIso,
-  mostRecentSundayKey,
+  isWeeklyAttendanceOpen,
+  targetSundayKey,
+  WEEKLY_ATTENDANCE_WINDOW_NOTICE,
   weeklyAttendanceCloseDateKey,
 } from "@/lib/kst-date";
 import {
@@ -19,7 +21,8 @@ import {
 
 export default async function AttendanceListPage() {
   const canAdmin = await currentUserCanManageApp();
-  const currentKey = mostRecentSundayKey();
+  const currentKey = targetSundayKey();
+  const currentOpen = isWeeklyAttendanceOpen(currentKey);
 
   const [weeks, specials] = await Promise.all([
     listWeeklySundaySlots(),
@@ -38,14 +41,15 @@ export default async function AttendanceListPage() {
   );
 
   const current = weeks.find((week) => kstDateKeyFromIso(week.sunday.date) === currentKey) ?? weeks[0];
-  const past = weeks.filter((week) => week !== current);
+  // 대상 주일보다 뒤에 저장된 주일이 있더라도 '지난 주일'에 섞지 않는다.
+  const past = weeks.filter((week) => week !== current && kstDateKeyFromIso(week.sunday.date) < currentKey);
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold">출석</h2>
         <p className="text-sm text-stone-600">
-          이번 주일 출석은 그 주 토요일까지 입력합니다. 다음 일요일부터는 전 주 출석을 고칠 수 없습니다.
+          {WEEKLY_ATTENDANCE_WINDOW_NOTICE}. 수요일부터는 다가오는 주일이 표시되고, 주일이 되면 입력이 열립니다.
         </p>
       </div>
 
@@ -57,11 +61,17 @@ export default async function AttendanceListPage() {
           >
             <div className="flex flex-wrap items-center gap-2">
               <p className="font-medium">{current.sunday.title}</p>
-              <Badge tone="green">이번 주일</Badge>
+              {currentOpen ? (
+                <Badge tone="green">이번 주일</Badge>
+              ) : (
+                <Badge>다가오는 주일</Badge>
+              )}
             </div>
             <p className="text-sm text-muted-foreground">{formatDateKo(current.sunday.date)}</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {formatDateKo(dateKeyToKstNoonIso(weeklyAttendanceCloseDateKey(currentKey)))}까지 입력
+              {currentOpen
+                ? `${formatDateKo(dateKeyToKstNoonIso(weeklyAttendanceCloseDateKey(currentKey)))}(화)까지 입력`
+                : `${formatDateKo(current.sunday.date)}부터 화요일까지 입력 · 지금은 잠겨 있어요`}
             </p>
             <WeekTotals totals={totalsById.get(current.sunday.id)} showQr={canAdmin} />
           </Link>

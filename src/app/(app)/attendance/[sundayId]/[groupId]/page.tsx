@@ -9,6 +9,7 @@ import { formatDateKo } from "@/lib/format";
 import {
   dateKeyToKstNoonIso,
   isWeeklyAttendanceOpen,
+  weeklyAttendanceLockedMessage,
   kstDateKeyFromIso,
   weeklyAttendanceCloseDateKey,
 } from "@/lib/kst-date";
@@ -49,6 +50,7 @@ export default async function AttendanceGroupPage({
 
   const special = isSpecialAttendance(sunday);
   const editable = special || isWeeklyAttendanceOpen(kstDateKeyFromIso(sunday.date));
+  const lockedMessage = special ? null : weeklyAttendanceLockedMessage(kstDateKeyFromIso(sunday.date));
   const closeLabel = formatDateKo(
     dateKeyToKstNoonIso(weeklyAttendanceCloseDateKey(kstDateKeyFromIso(sunday.date))),
   );
@@ -78,10 +80,10 @@ export default async function AttendanceGroupPage({
           title={special ? "참석 체크" : "가족원 출석"}
           subtitle={
             !editable
-              ? "지난 주일 출석은 수정할 수 없습니다"
+              ? (lockedMessage ?? undefined)
               : special
                 ? undefined
-                : `${closeLabel}까지 입력할 수 있습니다`
+                : `${closeLabel}(화)까지 입력할 수 있습니다`
           }
         />
         <form

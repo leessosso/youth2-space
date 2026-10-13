@@ -10,7 +10,7 @@ import { accountLabel } from "@/lib/format";
 import { buildHomeCards, type HomeCard } from "@/lib/platform/home-cards";
 import { earliestDate, orderByNearestDate, pickDashboardMeeting, type Dated } from "@/lib/platform/home-order";
 import { fetchAppSummaries } from "@/lib/platform/summary/fetch";
-import { isWeeklyAttendanceOpen, kstDateKeyFromIso, kstDateKeyNow } from "@/lib/kst-date";
+import { isWeeklyAttendanceOpen, kstDateKeyFromIso, kstDateKeyNow, targetSundayKey } from "@/lib/kst-date";
 import { resolvePlatformPersonas } from "@/lib/platform/roles";
 import { listMarksBySunday, listWeeklySundaySlots } from "@/lib/store/attendance";
 import { getGroupByCurrentLeader, listGroups } from "@/lib/store/groups";
@@ -32,11 +32,16 @@ export default async function DashboardPage() {
 
   const attendanceGroups = attendee ? [] : manages ? await listGroups() : myGroup ? [myGroup] : [];
 
-  const currentWeek = attendee ? null : (await listWeeklySundaySlots(1))[0] ?? null;
+  // 일~화는 방금 지난 주일, 수~토는 다가오는 주일 (kst-date targetSundayKey).
+  const targetKey = targetSundayKey();
+  const currentWeek = attendee
+    ? null
+    : (await listWeeklySundaySlots(1)).find((w) => kstDateKeyFromIso(w.sunday.date) === targetKey) ?? null;
   const latestSunday = currentWeek?.sunday ?? null;
   let missingAttendanceCount = 0;
   let myAttendanceMissing = false;
-  if (latestSunday) {
+  // 미입력 집계는 입력 기간(일~화)인 대상 주일에만. 수~토의 다가오는 주일은 아직 입력할 수 없어 세지 않는다.
+  if (latestSunday && isWeeklyAttendanceOpen(targetKey)) {
     const marks = currentWeek?.persisted ? await listMarksBySunday(latestSunday.id) : [];
     const groupIdsWithMarks = new Set(marks.map((m) => m.groupId));
     if (manages) {

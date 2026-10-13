@@ -57,7 +57,7 @@ import {
 } from "@/lib/store/meetings";
 import { sendFamilyMessage } from "@/lib/store/reports";
 import { assignGroupSeating as assignGroupSeatingStore, createWorshipService as createWorshipServiceStore } from "@/lib/store/worship";
-import { isWeeklyAttendanceOpen, kstDateKeyFromIso } from "@/lib/kst-date";
+import { kstDateKeyFromIso, weeklyAttendanceLockedMessage } from "@/lib/kst-date";
 import {
   createSpecialAttendance as createSpecialAttendanceStore,
   importQrNames,
@@ -792,12 +792,13 @@ export async function createSpecialAttendance(date: string, title: string) {
   return { ok: true, id: sunday.id };
 }
 
-/** 매주 주일 출석은 그 주일부터 토요일까지만 고친다. 비정기 출석체크는 그대로 연다. */
+/** 매주 주일 출석은 그 주일부터 화요일까지(서울)만 고친다. 비정기 출석체크는 그대로 연다. 역할별 예외 없음. */
 async function openAttendanceSundayId(sundayId: string): Promise<{ error: string } | { id: string }> {
   const sunday = await resolveAttendanceSunday(sundayId);
   if (!sunday) return { error: "출석을 찾을 수 없습니다." };
-  if (!isSpecialAttendance(sunday) && !isWeeklyAttendanceOpen(kstDateKeyFromIso(sunday.date))) {
-    return { error: "이번 주일 출석만 그 주 토요일까지 입력할 수 있습니다." };
+  if (!isSpecialAttendance(sunday)) {
+    const locked = weeklyAttendanceLockedMessage(kstDateKeyFromIso(sunday.date));
+    if (locked) return { error: locked };
   }
   return { id: sunday.id };
 }
