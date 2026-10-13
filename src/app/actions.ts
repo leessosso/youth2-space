@@ -57,7 +57,7 @@ import {
 } from "@/lib/store/meetings";
 import { sendFamilyMessage } from "@/lib/store/reports";
 import { assignGroupSeating as assignGroupSeatingStore, createWorshipService as createWorshipServiceStore } from "@/lib/store/worship";
-import { kstDateKeyFromIso, weeklyAttendanceLockedMessage } from "@/lib/kst-date";
+import { canEditWeeklyAttendance, kstDateKeyFromIso, weeklyAttendanceLockedMessage } from "@/lib/kst-date";
 import {
   createSpecialAttendance as createSpecialAttendanceStore,
   importQrNames,
@@ -792,13 +792,21 @@ export async function createSpecialAttendance(date: string, title: string) {
   return { ok: true, id: sunday.id };
 }
 
-/** 매주 주일 출석은 그 주일부터 화요일까지(서울)만 고친다. 비정기 출석체크는 그대로 연다. 역할별 예외 없음. */
-async function openAttendanceSundayId(sundayId: string): Promise<{ error: string } | { id: string }> {
+/**
+ * 매주 주일 출석은 그 주일부터 화요일까지(서울)만 고친다. 비정기 출석체크는 그대로 연다.
+ * 임원·목사·관리자(`canManageApp`)는 기간 예외: 지난 주일과 지금 대상 주일도 저장할 수 있다.
+ */
+async function openAttendanceSundayId(
+  sundayId: string,
+  exempt: boolean,
+): Promise<{ error: string } | { id: string }> {
   const sunday = await resolveAttendanceSunday(sundayId);
   if (!sunday) return { error: "출석을 찾을 수 없습니다." };
   if (!isSpecialAttendance(sunday)) {
-    const locked = weeklyAttendanceLockedMessage(kstDateKeyFromIso(sunday.date));
-    if (locked) return { error: locked };
+    const key = kstDateKeyFromIso(sunday.date);
+    if (!canEditWeeklyAttendance(key, exempt)) {
+      return { error: weeklyAttendanceLockedMessage(key) ?? "이 주일 출석은 입력할 수 없습니다." };
+    }
   }
   return { id: sunday.id };
 }
@@ -821,7 +829,7 @@ export async function saveAttendanceMarks(sundayId: string, groupId: string, for
     if (!ok) return { error: "권한이 없습니다." };
   }
 
-  const opened = await openAttendanceSundayId(sundayId);
+  const opened = await openAttendanceSundayId(sundayId, canEditQr);
   if ("error" in opened) return opened;
   sundayId = opened.id;
 
@@ -851,7 +859,7 @@ export async function importAttendanceQr(sundayId: string, service: "s13" | "s4"
   const actor = await requireAppManager();
   if (!actor) return { error: "권한이 없습니다." };
 
-  const opened = await openAttendanceSundayId(sundayId);
+  const opened = await openAttendanceSundayId(sundayId, true);
   if ("error" in opened) return opened;
   sundayId = opened.id;
 

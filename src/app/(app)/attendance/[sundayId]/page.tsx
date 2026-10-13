@@ -6,7 +6,8 @@ import { currentUserCanManageApp } from "@/lib/auth";
 import { formatDateKo } from "@/lib/format";
 import {
   dateKeyToKstNoonIso,
-  isWeeklyAttendanceOpen,
+  canEditWeeklyAttendance,
+  weeklyAttendanceExemptNotice,
   weeklyAttendanceLockedMessage,
   kstDateKeyFromIso,
   weeklyAttendanceCloseDateKey,
@@ -38,13 +39,16 @@ export default async function AttendanceSundayPage({
   if (sunday.id !== sundayId) redirect(`/attendance/${sunday.id}`);
 
   const special = isSpecialAttendance(sunday);
-  const editable = special || isWeeklyAttendanceOpen(kstDateKeyFromIso(sunday.date));
+  const canManage = await currentUserCanManageApp();
+  // 임원·목사·관리자(canManageApp)는 일~화 기간 예외.
+  const editable = special || canEditWeeklyAttendance(kstDateKeyFromIso(sunday.date), canManage);
+  const exemptNotice = special ? null : weeklyAttendanceExemptNotice(kstDateKeyFromIso(sunday.date), canManage);
   const lockedMessage = special ? null : weeklyAttendanceLockedMessage(kstDateKeyFromIso(sunday.date));
   const closeLabel = formatDateKo(
     dateKeyToKstNoonIso(weeklyAttendanceCloseDateKey(kstDateKeyFromIso(sunday.date))),
   );
 
-  if (!(await currentUserCanManageApp())) {
+  if (!canManage) {
     const myGroup = await getGroupByCurrentLeader(user.id);
     if (!myGroup) {
       return (
@@ -77,7 +81,7 @@ export default async function AttendanceSundayPage({
         <p className="text-sm text-stone-600">{formatDateKo(sunday.date)}</p>
         {!special && (
           <p className="mt-1 text-sm text-muted-foreground">
-            {editable ? `${closeLabel}(화)까지 입력할 수 있습니다.` : lockedMessage}
+            {exemptNotice ?? (editable ? `${closeLabel}(화)까지 입력할 수 있습니다.` : lockedMessage)}
           </p>
         )}
       </div>

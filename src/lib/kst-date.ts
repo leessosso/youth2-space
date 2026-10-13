@@ -100,6 +100,28 @@ export function isWeeklyAttendanceOpen(sundayDateKey: string, now = new Date()):
   return weeklyAttendanceWindow(sundayDateKey, now) === "open";
 }
 
+export const WEEKLY_ATTENDANCE_EXEMPT_NOTICE = "임원 권한으로 기간 외 입력 중";
+
+/**
+ * 그 주일 출석을 지금 저장할 수 있는지.
+ * - 일반: 일~화(open)만
+ * - 기간 예외(임원·목사·관리자, `canManageApp`): 지난 주일 전부 + 지금 대상 주일(수~토의 다가오는 주일).
+ *   대상 주일보다 더 먼 미래 주일은 예외도 막는다.
+ */
+export function canEditWeeklyAttendance(sundayDateKey: string, exempt: boolean, now = new Date()): boolean {
+  const w = weeklyAttendanceWindow(sundayDateKey, now);
+  if (w === "open") return true;
+  if (!exempt) return false;
+  if (w === "closed") return true;
+  return sundayDateKey === targetSundayKey(now);
+}
+
+/** 기간 예외로 입력 중이면 안내 문구, 아니면 null. */
+export function weeklyAttendanceExemptNotice(sundayDateKey: string, exempt: boolean, now = new Date()): string | null {
+  if (weeklyAttendanceWindow(sundayDateKey, now) === "open") return null;
+  return canEditWeeklyAttendance(sundayDateKey, exempt, now) ? WEEKLY_ATTENDANCE_EXEMPT_NOTICE : null;
+}
+
 /** 입력할 수 없는 주일에 보여줄 짧은 안내. */
 export function weeklyAttendanceLockedMessage(sundayDateKey: string, now = new Date()): string | null {
   const w = weeklyAttendanceWindow(sundayDateKey, now);

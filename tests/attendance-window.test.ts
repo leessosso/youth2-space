@@ -49,3 +49,30 @@ test("주일 목록은 대상 주일부터", () => {
   assert.deepEqual(recentSundayDateKeys(2, at("2026-10-14")), ["2026-10-18", "2026-10-11"]);
   assert.deepEqual(recentSundayDateKeys(2, at("2026-10-13")), ["2026-10-11", "2026-10-04"]);
 });
+
+test("임원 기간 예외: 지난 주일·대상 주일 허용, 더 먼 미래는 차단", async () => {
+  const { canEditWeeklyAttendance, weeklyAttendanceExemptNotice } = await import("../src/lib/kst-date");
+  const wed = at("2026-10-14");
+  // 일반 사용자: 변경 없음
+  assert.equal(canEditWeeklyAttendance("2026-10-11", false, wed), false);
+  assert.equal(canEditWeeklyAttendance("2026-10-18", false, wed), false);
+  assert.equal(canEditWeeklyAttendance("2026-10-11", false, at("2026-10-13")), true);
+  // 예외 사용자
+  assert.equal(canEditWeeklyAttendance("2026-10-11", true, wed), true);
+  assert.equal(canEditWeeklyAttendance("2026-09-06", true, wed), true);
+  assert.equal(canEditWeeklyAttendance("2026-10-18", true, wed), true);
+  assert.equal(canEditWeeklyAttendance("2026-10-25", true, wed), false);
+  // 안내 문구: 기간 외 예외 입력일 때만
+  assert.equal(weeklyAttendanceExemptNotice("2026-10-11", true, wed), "임원 권한으로 기간 외 입력 중");
+  assert.equal(weeklyAttendanceExemptNotice("2026-10-11", true, at("2026-10-12")), null);
+  assert.equal(weeklyAttendanceExemptNotice("2026-10-11", false, wed), null);
+});
+
+test("canManageApp: 임원 8직책·목사·관리자만 예외 대상", async () => {
+  const { canManageApp } = await import("../src/lib/types");
+  assert.equal(canManageApp({ role: "LEADER", officerTitle: "총무" }), true);
+  assert.equal(canManageApp({ role: "PASTOR", officerTitle: null }), true);
+  assert.equal(canManageApp({ role: "ADMIN", officerTitle: null }), true);
+  assert.equal(canManageApp({ role: "LEADER", officerTitle: null }), false);
+  assert.equal(canManageApp({ role: "ATTENDEE", officerTitle: null }), false);
+});
