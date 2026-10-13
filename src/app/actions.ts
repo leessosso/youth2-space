@@ -7,7 +7,7 @@ import {
   isPastorOrAdmin,
   leaderCanAccessGroup,
 } from "@/lib/auth";
-import { canManageAnnouncements, canManageApp, isSpecialAttendance, meetingDutyUserId, SERVING_DUTY_BY_KEY } from "@/lib/types";
+import { canManageAnnouncements, canManageApp, isLeaderTier, isMeetingAttendee, isMember, isSpecialAttendance, meetingDutyUserId, SERVING_DUTY_BY_KEY } from "@/lib/types";
 import {
   assignMemberToGroup as assignMemberToGroupStore,
   createGroup as createGroupStore,
@@ -22,6 +22,8 @@ import {
   listGroups,
 } from "@/lib/store/groups";
 import { appointOfficer, endOfficerYear, vacateOfficer } from "@/lib/store/officers";
+import { applyLeaderReset, applyOfficerReset, previewLeaderReset, previewOfficerReset } from "@/lib/store/role-reset";
+import { sameTargetIds } from "@/lib/role-reset";
 import { hashPassword } from "@/lib/password";
 import { isPhoneLike, normalizePhone } from "@/lib/phone";
 import {
@@ -95,10 +97,18 @@ import type {
 
 const MAX_SURVEY_QUESTIONS = 6;
 
+/**
+ * 이 파일의 서버 액션은 모두 리더 화면용이다. MEMBER(일반 성도)는 여기서 일괄 거부한다.
+ * 역할은 JWT가 아니라 Firestore 계정 기준이다 (가장 초기화로 강등된 직후에도 바로 막힌다).
+ */
 async function sessionUser() {
   const session = await auth();
   if (!session?.user?.id) throw new Error("UNAUTHORIZED");
-  return session.user;
+  const full = await getUserById(session.user.id);
+  if (!full || !(isLeaderTier(full.role) || isMeetingAttendee(full.role))) {
+    throw new Error("FORBIDDEN");
+  }
+  return { ...session.user, role: full.role };
 }
 
 async function requireAppManager() {
@@ -304,8 +314,9 @@ async function createLeaderNamedAccount(input: { name: string; email: string; ph
   return createNamedAccount({ ...input, role: "LEADER", attendeeKind: null });
 }
 
+/** 리더모임 참석(ATTENDEE)·일반 성도(MEMBER) 계정을 가장·임원으로 올린다. */
 async function promoteAttendeeToLeader(user: User): Promise<User> {
-  if (user.role !== "ATTENDEE") return user;
+  if (user.role !== "ATTENDEE" && !isMember(user.role)) return user;
   await setUserRole(user.id, "LEADER", null);
   return { ...user, role: "LEADER", attendeeKind: null };
 }
@@ -323,7 +334,7 @@ async function resolveLeaderForMember(formData: FormData) {
 
   if (member.userId) {
     const user = await getUserById(member.userId);
-    if (!user || (user.role !== "LEADER" && user.role !== "ATTENDEE")) {
+    if (!user || (user.role !== "LEADER" && user.role !== "ATTENDEE" && !isMember(user.role))) {
       return { ok: false as const, error: "이 성도에 연결된 계정을 가장·임원으로 쓸 수 없습니다." };
     }
     return { ok: true as const, user: await promoteAttendeeToLeader(user), member };
@@ -353,7 +364,7 @@ async function linkMemberToLeader(memberId: string, userId: string) {
     return { ok: false as const, error: "이 성도는 이미 다른 계정과 연결되어 있습니다." };
   }
   const user = await getUserById(userId);
-  if (!user || (user.role !== "LEADER" && user.role !== "ATTENDEE")) {
+  if (!user || (user.role !== "LEADER" && user.role !== "ATTENDEE" && !isMember(user.role))) {
     return { ok: false as const, error: "연결할 수 있는 계정이 아닙니다." };
   }
   const taken = await getMemberByUserId(user.id);
@@ -388,9 +399,10 @@ export async function grantMeetingAttendance(formData: FormData) {
 
   if (member.userId) {
     const user = await getUserById(member.userId);
-    if (!user || user.role !== "ATTENDEE") {
+    if (!user || (user.role !== "ATTENDEE" && !isMember(user.role))) {
       return { ok: false as const, error: "이 성도는 이미 가장·임원 계정이 있습니다." };
     }
+    // 일반 성도(MEMBER) 계정은 리더모임 참석 계정으로 바꾼다 (훈련·통독 바로가기는 사라진다).
     if (user.attendeeKind !== kind) await setUserRole(user.id, "ATTENDEE", kind);
     revalidatePath("/admin/members");
     return { ok: true as const };
@@ -521,6 +533,35 @@ export async function vacateOfficerAction(formData: FormData) {
   revalidatePath("/admin/handover");
   revalidatePath("/groups");
   return { ok: true as const };
+}
+
+const RESET_STALE_ERROR = "미리보기 이후 대상이 바뀌었습니다. 새로고침한 뒤 다시 확인해 주세요.";
+
+/** 임원 초기화: 직책만 비운다(역할 유지). 임원 지정과 같은 권한(목사·관리자). */
+export async function resetOfficersAction(expectedUserIds: string[]) {
+  const actor = await requirePastor();
+  if (!actor) return { ok: false as const, error: "임원 초기화는 목사만 할 수 있습니다." };
+  const targets = await previewOfficerReset(actor.id);
+  if (!sameTargetIds(expectedUserIds, targets)) return { ok: false as const, error: RESET_STALE_ERROR };
+  await applyOfficerReset(targets.map((t) => t.id));
+  revalidatePath("/admin/handover");
+  revalidatePath("/admin/members");
+  revalidatePath("/groups");
+  return { ok: true as const, count: targets.length };
+}
+
+/** 가장 초기화: 직책 없는 LEADER를 MEMBER로 내리고 이번 학기 가장 자리를 비운다. 앱 운영 권한. */
+export async function resetLeadersAction(expectedUserIds: string[]) {
+  const actor = await requireAppManager();
+  if (!actor) return { ok: false as const, error: "권한이 없습니다." };
+  const targets = await previewLeaderReset(actor.id);
+  if (!sameTargetIds(expectedUserIds, targets)) return { ok: false as const, error: RESET_STALE_ERROR };
+  await applyLeaderReset(targets);
+  revalidatePath("/admin/handover");
+  revalidatePath("/admin/members");
+  revalidatePath("/groups");
+  revalidatePath("/dashboard");
+  return { ok: true as const, count: targets.length };
 }
 
 async function pushServingDutyAssignmentIfChanged(
@@ -713,7 +754,7 @@ export async function createWorshipService(date: string, title: string) {
 
 export async function assignGroupSeating(serviceId: string, groupId: string, zoneId: string) {
   const user = await sessionUser();
-  if (!isPastorOrAdmin(user.role) && user.role !== "LEADER") {
+  if (!isLeaderTier(user.role)) {
     return { error: "권한이 없습니다." };
   }
   await assignGroupSeatingStore(serviceId, groupId, zoneId);

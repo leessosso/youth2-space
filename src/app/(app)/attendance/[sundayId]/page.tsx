@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { Button, Card, CardHeader, Label } from "@/components/ui";
-import { currentUserCanManageApp } from "@/lib/auth";
+import { currentUserCanManageApp, requireLeaderTier } from "@/lib/auth";
 import { formatDateKo } from "@/lib/format";
 import {
   dateKeyToKstNoonIso,
@@ -27,6 +27,7 @@ export default async function AttendanceSundayPage({
   params: Promise<{ sundayId: string }>;
   searchParams: Promise<{ qrService?: string; qrMatched?: string; qrAmbiguous?: string; qrUnmatched?: string }>;
 }) {
+  await requireLeaderTier();
   const { sundayId } = await params;
   const sp = await searchParams;
   const session = await auth();

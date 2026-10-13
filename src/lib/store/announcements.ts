@@ -112,7 +112,7 @@ export async function resolveAnnouncementRecipientUserIds(
 export function audienceLabel(audience: AnnouncementAudience): string {
   switch (audience) {
     case "all":
-      return "전체 (알림 켠 사용자)";
+      return "전체 (알림 켠 사용자, 일반 성도 포함)";
     case "leaders":
       return "가장 (담당 가족 있는 리더)";
     case "users":

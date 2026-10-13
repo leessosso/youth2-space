@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createGroupFromMember } from "@/app/actions";
 import { AppointMemberForm } from "@/components/member-account-form";
 import { Card, CardHeader, Input, Label } from "@/components/ui";
-import { currentUserCanManageApp } from "@/lib/auth";
+import { currentUserCanManageApp, requireLeaderTier } from "@/lib/auth";
 import { termLabel } from "@/lib/format";
 import { listAllMembers, listGroups } from "@/lib/store/groups";
 import { listActiveOfficers } from "@/lib/store/officers";
@@ -10,6 +10,7 @@ import { getCurrentTerm } from "@/lib/store/settings";
 import { getUsersByIds, listUsersByRole } from "@/lib/store/users";
 
 export default async function GroupsPage() {
+  await requireLeaderTier();
   const canAdmin = await currentUserCanManageApp();
 
   const term = await getCurrentTerm();

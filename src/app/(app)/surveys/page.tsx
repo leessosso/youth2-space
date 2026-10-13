@@ -2,12 +2,13 @@ import Link from "next/link";
 import { createEventSurvey } from "@/app/actions";
 import { SurveyCreateForm } from "@/components/survey-create-form";
 import { Badge, Card, CardHeader } from "@/components/ui";
-import { currentUserCanManageApp } from "@/lib/auth";
+import { currentUserCanManageApp, requireLeaderTier } from "@/lib/auth";
 import { formatDateKo } from "@/lib/format";
 import { listEventSurveys } from "@/lib/store/surveys";
 import { isParticipationSurvey } from "@/lib/types";
 
 export default async function SurveysPage() {
+  await requireLeaderTier();
   const canAdmin = await currentUserCanManageApp();
 
   const surveys = await listEventSurveys();

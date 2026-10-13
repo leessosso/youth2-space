@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { signOut } from "@/auth";
 import type { OfficerTitle, Role } from "@/lib/types";
-import { canManageApp, isMeetingAttendee } from "@/lib/types";
+import { canManageApp, canUsePlatformApps, isMeetingAttendee, isMember } from "@/lib/types";
 import { FitText } from "@/components/fit-text";
 import { AppMain } from "@/components/app-main";
 import { AppNav, type NavItem } from "@/components/app-nav";
@@ -15,12 +15,22 @@ function navFor(
   user: { role: Role; officerTitle: OfficerTitle | null },
   familyReportHref: string,
 ): NavItem[] {
+  if (isMember(user.role)) {
+    // 일반 성도: 훈련·통독 바로가기는 플랫폼 링크 영역에 따로 보인다.
+    return [
+      { href: "/dashboard", label: "홈" },
+      { href: "/announcements", label: "공지" },
+      { href: SORTING_HAT_USER_PATH, label: "배정모자" },
+      { href: "/me", label: "내 정보" },
+    ];
+  }
   if (isMeetingAttendee(user.role)) {
     return [
       { href: "/dashboard", label: "홈" },
       { href: "/meetings", label: "리더모임" },
       { href: "/announcements", label: "공지" },
       { href: SORTING_HAT_USER_PATH, label: "배정모자" },
+      { href: "/me", label: "내 정보" },
     ];
   }
   const manages = canManageApp(user);
@@ -42,6 +52,7 @@ function navFor(
       { href: SORTING_HAT_ADMIN_PATH, label: "배정 관리" },
     );
   }
+  items.push({ href: "/me", label: "내 정보" });
   return items;
 }
 
@@ -88,7 +99,7 @@ export function AppShell({
           </Link>
         </div>
         <LeaderAxisChrome leaderNav={<AppNav items={nav} variant="desktop" />} />
-        {!isMeetingAttendee(user.role) && (
+        {canUsePlatformApps(user.role) && (
           <div className="space-y-0.5 border-t border-border px-3 py-3">
             <PlatformTrainingLink />
             <PlatformTongdokLink />
@@ -116,7 +127,7 @@ export function AppShell({
               leaderNav={
                 <AppNavDrawer
                   items={nav}
-                  showPlatform={!isMeetingAttendee(user.role)}
+                  showPlatform={canUsePlatformApps(user.role)}
                   footer={<LogoutButton />}
                 />
               }

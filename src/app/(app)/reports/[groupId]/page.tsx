@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { FamilyReportThread } from "@/components/family-report-thread";
 import { Card } from "@/components/ui";
-import { isPastorOrAdmin, leaderCanAccessGroup } from "@/lib/auth";
+import { isPastorOrAdmin, leaderCanAccessGroup, requireLeaderTier } from "@/lib/auth";
 import { getGroupById, listMembersByGroup } from "@/lib/store/groups";
 import { getThreadByGroup, listMessagesByThread } from "@/lib/store/reports";
 import { getUsersByIds } from "@/lib/store/users";
@@ -13,6 +13,7 @@ export default async function FamilyReportPage({
 }: {
   params: Promise<{ groupId: string }>;
 }) {
+  await requireLeaderTier();
   const { groupId } = await params;
   const session = await auth();
   const user = session!.user;

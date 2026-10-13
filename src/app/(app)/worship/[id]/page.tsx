@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { assignGroupSeating } from "@/app/actions";
 import { Button, Card, CardHeader } from "@/components/ui";
-import { currentUserCanManageApp } from "@/lib/auth";
+import { currentUserCanManageApp, requireLeaderTier } from "@/lib/auth";
 import { formatDateKo } from "@/lib/format";
 import { listGroups } from "@/lib/store/groups";
 import {
@@ -17,6 +17,7 @@ export default async function WorshipDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireLeaderTier();
   const { id } = await params;
   const session = await auth();
   const canEdit = (await currentUserCanManageApp()) || session!.user.role === "LEADER";

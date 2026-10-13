@@ -6,12 +6,14 @@ import {
   listAssignmentsByService,
   listZonesByService,
 } from "@/lib/store/worship";
+import { requireLeaderTier } from "@/lib/auth";
 
 export default async function WorshipPrintPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireLeaderTier();
   const { id } = await params;
   const service = await getWorshipServiceById(id);
   if (!service) notFound();

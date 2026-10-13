@@ -101,6 +101,10 @@ export async function isPhoneUsedByAnotherUser(phone: string, excludeUserId?: st
   return users.length > 0;
 }
 
+export async function updateUserPhone(userId: string, phone: string | null) {
+  await usersCol.doc(userId).update({ phone: phone ? normalizePhone(phone) : null });
+}
+
 export async function updateOfficerTitle(userId: string, officerTitle: OfficerTitle | null) {
   await usersCol.doc(userId).update({ officerTitle });
 }

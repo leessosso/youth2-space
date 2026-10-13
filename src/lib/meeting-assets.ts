@@ -13,6 +13,8 @@ export function canViewMeetingAsset(
   asset: MeetingAsset,
   viewer: Pick<User, "id" | "role" | "officerTitle">,
 ): boolean {
+  // 리더모임 자료는 리더·참석 계정만. 일반 성도(MEMBER)는 공개 자료도 보지 않는다.
+  if (viewer.role === "MEMBER") return false;
   if (isCommentaryAssetPublished(asset)) return true;
   return canManageApp(viewer) || asset.uploadedById === viewer.id;
 }

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createSpecialAttendance } from "@/app/actions";
 import { CollapsibleSection } from "@/components/collapsible-section";
 import { Badge, Button, Card, CardHeader, Input, Label } from "@/components/ui";
-import { currentUserCanManageApp } from "@/lib/auth";
+import { currentUserCanManageApp, requireLeaderTier } from "@/lib/auth";
 import { formatDateKo } from "@/lib/format";
 import {
   dateKeyToKstNoonIso,
@@ -18,6 +18,7 @@ import {
 } from "@/lib/store/attendance";
 
 export default async function AttendanceListPage() {
+  await requireLeaderTier();
   const canAdmin = await currentUserCanManageApp();
   const currentKey = mostRecentSundayKey();
 

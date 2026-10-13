@@ -14,7 +14,7 @@ import { getGroupByCurrentLeader, listGroups } from "@/lib/store/groups";
 import { listMeetings } from "@/lib/store/meetings";
 import { getPollDayBannerIfToday } from "@/lib/store/poll-day";
 import { listPushSubscriptionsForUser } from "@/lib/store/push-subscriptions";
-import { canManageApp, isMeetingAttendee } from "@/lib/types";
+import { canManageApp, isMeetingAttendee, isMember } from "@/lib/types";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -22,12 +22,14 @@ export default async function DashboardPage() {
   const actor = await getCurrentUser();
   const manages = actor ? canManageApp(actor) : false;
   const attendee = isMeetingAttendee(user.role);
+  const member = actor ? isMember(actor.role) : isMember(user.role);
+  const noAttendance = attendee || member;
 
   const myGroup = user.role === "LEADER" ? await getGroupByCurrentLeader(user.id) : null;
 
-  const attendanceGroups = attendee ? [] : manages ? await listGroups() : myGroup ? [myGroup] : [];
+  const attendanceGroups = noAttendance ? [] : manages ? await listGroups() : myGroup ? [myGroup] : [];
 
-  const currentWeek = attendee ? null : (await listWeeklySundaySlots(1))[0] ?? null;
+  const currentWeek = noAttendance ? null : (await listWeeklySundaySlots(1))[0] ?? null;
   const latestSunday = currentWeek?.sunday ?? null;
   let missingAttendanceCount = 0;
   let myAttendanceMissing = false;
@@ -41,7 +43,7 @@ export default async function DashboardPage() {
     }
   }
 
-  const meetings = await listMeetings();
+  const meetings = member ? [] : await listMeetings();
   const upcoming = meetings.find((m) => new Date(m.date) >= new Date()) ?? meetings[0] ?? null;
 
   const familyReportHref = myGroup ? `/reports/${myGroup.id}` : "/reports";

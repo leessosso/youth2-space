@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { HomeCard } from "@/lib/platform/home-cards";
+import { TONGDOK_SSO_ENTRY_PATH } from "@/lib/platform/tongdok-sso-constants";
 import { TRAINING_SSO_ENTRY_PATH } from "@/lib/platform/training-sso-constants";
 import { Badge, Card, CardHeader } from "@/components/ui";
 
@@ -13,7 +14,8 @@ function CardHrefLink({
   className?: string;
   children: ReactNode;
 }) {
-  if (href === TRAINING_SSO_ENTRY_PATH) {
+  // SSO 진입은 전체 페이지 이동이어야 한다 (next/link 금지).
+  if (href === TRAINING_SSO_ENTRY_PATH || href === TONGDOK_SSO_ENTRY_PATH) {
     return (
       <a href={href} className={className}>
         {children}

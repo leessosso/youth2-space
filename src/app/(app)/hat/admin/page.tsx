@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { SortingHatFrame } from "@/components/sorting-hat-frame";
-import { currentUserCanManageApp } from "@/lib/auth";
+import { currentUserCanManageApp, requireLeaderTier } from "@/lib/auth";
 import {
   SORTING_HAT_ADMIN_EMBED,
   meetingIdFromReturnParam,
@@ -12,6 +12,7 @@ export default async function HatAdminPage({
 }: {
   searchParams: Promise<{ return?: string }>;
 }) {
+  await requireLeaderTier();
   if (!(await currentUserCanManageApp())) redirect("/dashboard");
 
   const { return: returnTo } = await searchParams;

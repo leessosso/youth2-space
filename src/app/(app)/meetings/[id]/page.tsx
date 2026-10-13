@@ -11,7 +11,7 @@ import { MeetingScriptureBlock } from "@/components/meeting-scripture";
 import { Button, Card, CardHeader, Textarea } from "@/components/ui";
 import { canViewMeetingAsset } from "@/lib/meeting-assets";
 import { resolveMeetingScripture } from "@/lib/meeting-scripture";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, requireLeaderTier } from "@/lib/auth";
 import { formatDateTimeKo } from "@/lib/format";
 import { listCurrentLeaderUserIds } from "@/lib/store/groups";
 import { getMeetingById, listAssetsByMeeting } from "@/lib/store/meetings";
@@ -28,6 +28,7 @@ export default async function MeetingDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireLeaderTier({ allowAttendee: true });
   const { id } = await params;
   const session = await auth();
   const user = session!.user;

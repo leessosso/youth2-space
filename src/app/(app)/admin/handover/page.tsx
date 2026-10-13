@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { appointLeaderFromMember, startNextFamilyTerm } from "@/app/actions";
+import { appointLeaderFromMember, resetLeadersAction, resetOfficersAction, startNextFamilyTerm } from "@/app/actions";
+import { RoleResetPanel } from "@/components/role-reset-panel";
+import { previewLeaderReset, previewOfficerReset } from "@/lib/store/role-reset";
 import { AppointMemberForm } from "@/components/member-account-form";
 import { OfficerYearBoard } from "@/components/officer-year-board";
 import { Button, Card, CardHeader } from "@/components/ui";
-import { currentUserCanManageApp, getCurrentUser } from "@/lib/auth";
+import { currentUserCanManageApp, getCurrentUser, requireLeaderTier } from "@/lib/auth";
 import { formatDateKo, termLabel } from "@/lib/format";
 import { listAllGroups, listAllMembers, listGroups, listLeaderTermsByGroup } from "@/lib/store/groups";
 import { listActiveOfficers } from "@/lib/store/officers";
@@ -15,6 +17,7 @@ import { nextTerm, sameTerm } from "@/lib/term";
 import { isPastorOrAdmin, OFFICER_TITLES } from "@/lib/types";
 
 export default async function HandoverPage() {
+  await requireLeaderTier();
   if (!(await currentUserCanManageApp())) redirect("/dashboard");
 
   const [term, groups, allGroups, leaders, members, actor] = await Promise.all([
@@ -49,6 +52,10 @@ export default async function HandoverPage() {
   );
 
   const pastWithHeads = pastGroups.slice(0, 12);
+
+  const [officerResetTargets, leaderResetTargets] = actor
+    ? await Promise.all([isPastor ? previewOfficerReset(actor.id) : Promise.resolve([]), previewLeaderReset(actor.id)])
+    : [[], []];
 
   const leaderIdsInTerms = groupsWithTerms.flatMap((g) => g.terms.map((t) => t.leaderId));
   const leaderNames = await getUsersByIds([
@@ -101,6 +108,33 @@ export default async function HandoverPage() {
             </Button>
           </form>
         )}
+      </Card>
+
+      <Card padding="md">
+        <h3 className="font-medium text-foreground">역할 초기화</h3>
+        <p className="mt-1 text-sm text-stone-600">
+          목사·관리자와 게스트·새가족팀원 계정은 대상에서 빠집니다. 본인도 빠집니다.
+        </p>
+        <div className="mt-4 grid gap-6 lg:grid-cols-2">
+          {isPastor ? (
+            <RoleResetPanel
+              title="임원 초기화"
+              description="직책만 비웁니다. 계정 역할(가장 등)은 그대로입니다."
+              people={officerResetTargets}
+              confirmLabel="임원 초기화"
+              action={resetOfficersAction}
+            />
+          ) : (
+            <p className="text-sm text-muted-foreground">임원 초기화는 목사가 합니다.</p>
+          )}
+          <RoleResetPanel
+            title="가장 초기화"
+            description="직책 없는 가장 계정을 일반 성도(MEMBER)로 내리고, 이번 학기 가족의 가장 자리를 비웁니다. 임원은 남깁니다."
+            people={leaderResetTargets.map(({ id, name, detail }) => ({ id, name, detail }))}
+            confirmLabel="가장 초기화"
+            action={resetLeadersAction}
+          />
+        </div>
       </Card>
 
       <OfficerYearBoard
