@@ -27,3 +27,28 @@ export function earliestDate(dates: (string | null | undefined)[]): string | nul
   const valid = dates.filter((d): d is string => !!d && /^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
   return valid[0] ?? null;
 }
+
+/**
+ * 대시보드 리더 모임 카드에 보여줄 모임 (오늘 = Asia/Seoul 날짜 키).
+ * 오늘 이후(오늘 포함) 모임이 있으면 가장 가까운 것(`upcoming`), 없으면 가장 최근 지난 모임(`past`).
+ * `dateKey`는 모임 날짜의 서울 날짜 키 — 카드 정렬에도 같은 값을 쓴다.
+ */
+export function pickDashboardMeeting<T>(
+  meetings: T[],
+  dateKey: (m: T) => string,
+  today: string,
+): { meeting: T; date: string; kind: "upcoming" | "past" } | null {
+  let future: { meeting: T; date: string } | null = null;
+  let past: { meeting: T; date: string } | null = null;
+  for (const meeting of meetings) {
+    const date = dateKey(meeting);
+    if (date >= today) {
+      if (!future || date < future.date) future = { meeting, date };
+    } else if (!past || date > past.date) {
+      past = { meeting, date };
+    }
+  }
+  if (future) return { ...future, kind: "upcoming" };
+  if (past) return { ...past, kind: "past" };
+  return null;
+}
