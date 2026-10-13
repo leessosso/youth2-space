@@ -8,7 +8,9 @@ import { currentUserCanManageApp, leaderCanAccessGroup } from "@/lib/auth";
 import { formatDateKo } from "@/lib/format";
 import {
   dateKeyToKstNoonIso,
-  isWeeklyAttendanceOpen,
+  canEditWeeklyAttendance,
+  weeklyAttendanceExemptNotice,
+  weeklyAttendanceLockedMessage,
   kstDateKeyFromIso,
   weeklyAttendanceCloseDateKey,
 } from "@/lib/kst-date";
@@ -48,7 +50,10 @@ export default async function AttendanceGroupPage({
   if (!group) notFound();
 
   const special = isSpecialAttendance(sunday);
-  const editable = special || isWeeklyAttendanceOpen(kstDateKeyFromIso(sunday.date));
+  // 임원·목사·관리자(canManageApp)는 일~화 기간 예외.
+  const editable = special || canEditWeeklyAttendance(kstDateKeyFromIso(sunday.date), canEditQr);
+  const exemptNotice = special ? null : weeklyAttendanceExemptNotice(kstDateKeyFromIso(sunday.date), canEditQr);
+  const lockedMessage = special ? null : weeklyAttendanceLockedMessage(kstDateKeyFromIso(sunday.date));
   const closeLabel = formatDateKo(
     dateKeyToKstNoonIso(weeklyAttendanceCloseDateKey(kstDateKeyFromIso(sunday.date))),
   );
@@ -77,11 +82,13 @@ export default async function AttendanceGroupPage({
         <CardHeader
           title={special ? "참석 체크" : "가족원 출석"}
           subtitle={
-            !editable
-              ? "지난 주일 출석은 수정할 수 없습니다"
+            exemptNotice
+              ? exemptNotice
+              : !editable
+              ? (lockedMessage ?? undefined)
               : special
                 ? undefined
-                : `${closeLabel}까지 입력할 수 있습니다`
+                : `${closeLabel}(화)까지 입력할 수 있습니다`
           }
         />
         <form

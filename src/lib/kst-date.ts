@@ -58,26 +58,85 @@ export function mostRecentSundayKey(now = new Date()): string {
   return shiftDateKey(dateKey, -weekday);
 }
 
-/** 그 주일 출석을 닫는 날. 주일로부터 6일 뒤인 토요일. */
+/** 주일 출석은 일·월·화(서울)에만 입력한다. 화요일 = 주일 + 2일. */
+export const WEEKLY_ATTENDANCE_OPEN_DAYS = 3;
+
+export const WEEKLY_ATTENDANCE_WINDOW_NOTICE = "주일 출석은 일~화요일에만 입력할 수 있어요";
+
+/** 그 주일 출석을 닫는 날(마지막 입력일). 주일로부터 2일 뒤인 화요일. */
 export function weeklyAttendanceCloseDateKey(sundayDateKey: string): string {
-  return shiftDateKey(sundayDateKey, 6);
+  return shiftDateKey(sundayDateKey, WEEKLY_ATTENDANCE_OPEN_DAYS - 1);
 }
 
 /**
- * 이번 주일만 입력할 수 있다.
- * 20일 주일이면 26일(토)까지이고, 27일(다음 주일)부터는 그 전 주 출석이 닫힌다.
+ * 지금 '이번 주' 출석으로 보여줄 주일.
+ * 일~화에는 방금 지난(또는 오늘) 주일, 수~토에는 다가오는 주일.
+ * 예: 10/14(수)면 10/18 주일.
  */
+export function targetSundayKey(now = new Date()): string {
+  const { dateKey, weekday } = kstCalendar(now);
+  return weekday < WEEKLY_ATTENDANCE_OPEN_DAYS
+    ? shiftDateKey(dateKey, -weekday)
+    : shiftDateKey(dateKey, 7 - weekday);
+}
+
+export type WeeklyAttendanceWindow = "open" | "upcoming" | "closed";
+
+/**
+ * 주일 출석 입력 상태.
+ * - open: 그 주일부터 화요일까지
+ * - upcoming: 아직 주일이 오지 않음(수~토에 보는 다가오는 주일 포함)
+ * - closed: 화요일이 지난 주일
+ */
+export function weeklyAttendanceWindow(sundayDateKey: string, now = new Date()): WeeklyAttendanceWindow {
+  const today = kstCalendar(now).dateKey;
+  if (today < sundayDateKey) return "upcoming";
+  if (today <= weeklyAttendanceCloseDateKey(sundayDateKey)) return "open";
+  return "closed";
+}
+
+/** 그 주일 출석을 지금 입력할 수 있는지 (일~화). */
 export function isWeeklyAttendanceOpen(sundayDateKey: string, now = new Date()): boolean {
-  return sundayDateKey === mostRecentSundayKey(now);
+  return weeklyAttendanceWindow(sundayDateKey, now) === "open";
+}
+
+export const WEEKLY_ATTENDANCE_EXEMPT_NOTICE = "임원 권한으로 기간 외 입력 중";
+
+/**
+ * 그 주일 출석을 지금 저장할 수 있는지.
+ * - 일반: 일~화(open)만
+ * - 기간 예외(임원·목사·관리자, `canManageApp`): 지난 주일 전부 + 지금 대상 주일(수~토의 다가오는 주일).
+ *   대상 주일보다 더 먼 미래 주일은 예외도 막는다.
+ */
+export function canEditWeeklyAttendance(sundayDateKey: string, exempt: boolean, now = new Date()): boolean {
+  const w = weeklyAttendanceWindow(sundayDateKey, now);
+  if (w === "open") return true;
+  if (!exempt) return false;
+  if (w === "closed") return true;
+  return sundayDateKey === targetSundayKey(now);
+}
+
+/** 기간 예외로 입력 중이면 안내 문구, 아니면 null. */
+export function weeklyAttendanceExemptNotice(sundayDateKey: string, exempt: boolean, now = new Date()): string | null {
+  if (weeklyAttendanceWindow(sundayDateKey, now) === "open") return null;
+  return canEditWeeklyAttendance(sundayDateKey, exempt, now) ? WEEKLY_ATTENDANCE_EXEMPT_NOTICE : null;
+}
+
+/** 입력할 수 없는 주일에 보여줄 짧은 안내. */
+export function weeklyAttendanceLockedMessage(sundayDateKey: string, now = new Date()): string | null {
+  const w = weeklyAttendanceWindow(sundayDateKey, now);
+  if (w === "open") return null;
+  if (w === "upcoming") return `${WEEKLY_ATTENDANCE_WINDOW_NOTICE}. 주일이 되면 입력이 열립니다.`;
+  return `${WEEKLY_ATTENDANCE_WINDOW_NOTICE}. 지난 주일 출석은 수정할 수 없습니다.`;
 }
 
 export function isKstSunday(now = new Date()): boolean {
   return kstCalendar(now).weekday === 0;
 }
 
-/** 이번 주일부터 과거로 count개의 일요일. */
+/** 지금 대상 주일(수~토면 다가오는 주일)부터 과거로 count개의 일요일. */
 export function recentSundayDateKeys(count: number, now = new Date()): string[] {
-  const latest = mostRecentSundayKey(now);
+  const latest = targetSundayKey(now);
   return Array.from({ length: count }, (_, i) => shiftDateKey(latest, -7 * i));
 }
 
