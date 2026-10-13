@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import { auth } from "@/auth";
+import { AppSummaryCards } from "@/components/app-summary-cards";
 import { HomeCardGrid } from "@/components/home-card-grid";
 import { PollDayBanner } from "@/components/poll-day-banner";
 import { PushNotificationSettings } from "@/components/push-notification-settings";
@@ -83,6 +85,13 @@ export default async function DashboardPage() {
           역할: {accountLabel(actor ?? user)}
         </p>
       </div>
+
+      {/* 훈련·통독 요약: 플래그가 켜져 있고 참여 중일 때만. 실패해도 대시보드는 기다리지 않는다. */}
+      {!attendee && (
+        <Suspense fallback={null}>
+          <AppSummaryCards sub={user.id} />
+        </Suspense>
+      )}
 
       <HomeCardGrid cards={homeCards} />
 

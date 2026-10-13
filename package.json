@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "eslint",
     "lint:design": "eslint --config eslint.design.config.mjs --max-warnings=0 src",
+    "test": "tsx --test tests/*.test.ts",
     "icons:generate": "node scripts/generate-pwa-icons.mjs"
   },
   "dependencies": {
