@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { auth } from "@/auth";
-import { AppSummaryCards } from "@/components/app-summary-cards";
+import { AppShortcuts, AppSummaryCards, isTrainingShortcut } from "@/components/app-summary-cards";
 import { HomeCardGrid } from "@/components/home-card-grid";
 import { PollDayBanner } from "@/components/poll-day-banner";
 import { PushNotificationSettings } from "@/components/push-notification-settings";
@@ -68,6 +68,10 @@ export default async function DashboardPage() {
     nextMeetingHref: upcoming ? `/meetings/${upcoming.id}` : null,
   });
 
+  // 훈련 바로가기는 요약 카드와 같은 Suspense 경계에서 그린다: 로딩·실패 땐 바로가기, 요약이 오면 요약이 대신한다.
+  const appShortcuts = attendee ? [] : homeCards.filter(isTrainingShortcut);
+  const gridCards = attendee ? homeCards : homeCards.filter((c) => !isTrainingShortcut(c));
+
   const webPushConfigured = isWebPushConfigured();
   const webPushSubscribed = webPushConfigured
     ? (await listPushSubscriptionsForUser(user.id)).length > 0
@@ -86,14 +90,14 @@ export default async function DashboardPage() {
         </p>
       </div>
 
+      <HomeCardGrid cards={gridCards} />
+
       {/* 훈련·통독 요약: 플래그가 켜져 있고 참여 중일 때만. 실패해도 대시보드는 기다리지 않는다. */}
       {!attendee && (
-        <Suspense fallback={null}>
-          <AppSummaryCards sub={user.id} />
+        <Suspense fallback={<AppShortcuts cards={appShortcuts} />}>
+          <AppSummaryCards sub={user.id} shortcuts={appShortcuts} />
         </Suspense>
       )}
-
-      <HomeCardGrid cards={homeCards} />
 
       <PushNotificationSettings
         configured={webPushConfigured}

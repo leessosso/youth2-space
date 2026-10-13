@@ -15,6 +15,17 @@ const ENV = {
   TONGDOK_ORIGIN: "https://td.example",
 } as unknown as NodeJS.ProcessEnv;
 
+/** 타임아웃까지 응답하지 않는 fetch. AbortSignal.timeout 타이머는 unref라 이벤트 루프를 붙잡아 둔다. */
+function hang(signal?: AbortSignal | null): Promise<Response> {
+  return new Promise((_, reject) => {
+    const keep = setTimeout(() => {}, 10_000);
+    signal?.addEventListener("abort", () => {
+      clearTimeout(keep);
+      reject(signal.reason);
+    });
+  });
+}
+
 const TRAINING_OK = {
   version: 1,
   app: "class-management",
@@ -121,8 +132,7 @@ test("폴백: 401·500·타임아웃·잘못된 JSON·throw는 해당 앱만 nul
     async () => {
       throw new Error("ECONNRESET");
     },
-    (_url, signal) =>
-      new Promise((_, reject) => signal?.addEventListener("abort", () => reject(signal.reason))),
+    (_url, signal) => hang(signal),
   ];
   for (const failing of cases) {
     clearSummaryCache();
@@ -168,4 +178,28 @@ test("캐시: 성공은 sub별 45초, 실패는 캐시 안 함, 사용자 간 �
   t += 46_000;
   await fetchAppSummaries("a", deps);
   assert.equal(calls, 4);
+});
+
+test("stale-while-error: 실패 시 10분 안의 마지막 성공을 쓰고, 그 뒤엔 숨김", async () => {
+  clearSummaryCache();
+  let t = 5_000_000;
+  let fail = false;
+  const deps = {
+    env: { ...ENV, TONGDOK_ORIGIN: "" } as NodeJS.ProcessEnv,
+    now: () => t,
+    timeoutMs: 50,
+    fetchImpl: (async (_i: URL | RequestInfo, init?: RequestInit) =>
+      fail ? hang(init?.signal) : Response.json(TRAINING_OK)) as typeof fetch,
+  };
+  assert.ok((await fetchAppSummaries("s", deps)).training);
+  fail = true;
+  t += 60_000;
+  assert.ok((await fetchAppSummaries("s", deps)).training, "timeout -> stale");
+  t += 10 * 60_000;
+  assert.equal((await fetchAppSummaries("s", deps)).training, null);
+});
+
+test("기본 타임아웃은 3초", async () => {
+  const { SUMMARY_TIMEOUT_MS } = await import("../src/lib/platform/summary/fetch");
+  assert.equal(SUMMARY_TIMEOUT_MS, 3000);
 });
