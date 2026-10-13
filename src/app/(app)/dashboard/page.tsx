@@ -1,13 +1,16 @@
-import { Suspense } from "react";
+import type { ReactNode } from "react";
 import { auth } from "@/auth";
-import { AppShortcuts, AppSummaryCards, isTrainingShortcut } from "@/components/app-summary-cards";
-import { HomeCardGrid } from "@/components/home-card-grid";
+import { isTrainingShortcut, TongdokSummaryCard, TrainingSummaryCard } from "@/components/app-summary-cards";
+import { HomeCardLink } from "@/components/home-card-grid";
 import { PollDayBanner } from "@/components/poll-day-banner";
 import { PushNotificationSettings } from "@/components/push-notification-settings";
 import { getCurrentUser } from "@/lib/auth";
 import { isWebPushConfigured } from "@/lib/firebase-client";
 import { accountLabel } from "@/lib/format";
-import { buildHomeCards } from "@/lib/platform/home-cards";
+import { buildHomeCards, type HomeCard } from "@/lib/platform/home-cards";
+import { earliestDate, orderByNearestDate, type Dated } from "@/lib/platform/home-order";
+import { fetchAppSummaries } from "@/lib/platform/summary/fetch";
+import { isWeeklyAttendanceOpen, kstDateKeyFromIso, kstDateKeyNow } from "@/lib/kst-date";
 import { resolvePlatformPersonas } from "@/lib/platform/roles";
 import { listMarksBySunday, listWeeklySundaySlots } from "@/lib/store/attendance";
 import { getGroupByCurrentLeader, listGroups } from "@/lib/store/groups";
@@ -22,6 +25,8 @@ export default async function DashboardPage() {
   const actor = await getCurrentUser();
   const manages = actor ? canManageApp(actor) : false;
   const attendee = isMeetingAttendee(user.role);
+  // 요약은 다른 데이터와 병렬로 시작한다(앱별 3초 상한, 실패 시 최근 응답 또는 null). 날짜 정렬에 쓰려고 페이지에서 기다린다.
+  const summariesPromise = attendee ? null : fetchAppSummaries(user.id);
 
   const myGroup = user.role === "LEADER" ? await getGroupByCurrentLeader(user.id) : null;
 
@@ -68,9 +73,47 @@ export default async function DashboardPage() {
     nextMeetingHref: upcoming ? `/meetings/${upcoming.id}` : null,
   });
 
-  // 훈련 바로가기는 요약 카드와 같은 Suspense 경계에서 그린다: 로딩·실패 땐 바로가기, 요약이 오면 요약이 대신한다.
-  const appShortcuts = attendee ? [] : homeCards.filter(isTrainingShortcut);
-  const gridCards = attendee ? homeCards : homeCards.filter((c) => !isTrainingShortcut(c));
+  const summaries = summariesPromise ? await summariesPromise : null;
+  const programs = summaries?.training?.programs.filter((p) => p.status === "active") ?? [];
+  const cohorts = summaries?.tongdok?.cohorts ?? [];
+
+  const today = kstDateKeyNow();
+  const sundayKey = latestSunday ? kstDateKeyFromIso(latestSunday.date) : null;
+  // 이번 주 출석은 입력 기간 중이면 '오늘'로 본다.
+  const attendanceDate = sundayKey && isWeeklyAttendanceOpen(sundayKey) ? today : sundayKey;
+  const meetingDate = upcoming ? kstDateKeyFromIso(upcoming.date) : null;
+  const cardDate = (card: HomeCard): string | null => {
+    switch (card.id) {
+      case "weekly_attendance":
+      case "my_family_attendance":
+      case "new_family_group":
+        return attendanceDate;
+      case "upcoming_meeting":
+        return meetingDate;
+      default:
+        return null;
+    }
+  };
+
+  const emphasis = homeCards.filter((c) => c.variant === "emphasis");
+  const dated: Dated<{ key: string; node: ReactNode }>[] = homeCards
+    .filter((c) => c.variant !== "emphasis")
+    // 훈련 요약이 있으면 요약 카드가 `훈련 프로그램` 바로가기를 대신한다.
+    .filter((c) => !(programs.length > 0 && isTrainingShortcut(c)))
+    .map((card) => ({ item: { key: card.id, node: <HomeCardLink card={card} /> }, date: cardDate(card) }));
+  if (programs.length > 0) {
+    dated.push({
+      item: { key: "training_summary", node: <TrainingSummaryCard programs={programs} /> },
+      date: earliestDate(programs.map((p) => p.nextSession?.date)),
+    });
+  }
+  if (cohorts.length > 0) {
+    dated.push({
+      item: { key: "tongdok_summary", node: <TongdokSummaryCard cohorts={cohorts} /> },
+      date: cohorts.some((c) => c.today) ? today : null,
+    });
+  }
+  const ordered = orderByNearestDate(dated, today);
 
   const webPushConfigured = isWebPushConfigured();
   const webPushSubscribed = webPushConfigured
@@ -90,13 +133,20 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <HomeCardGrid cards={gridCards} />
-
-      {/* 훈련·통독 요약: 플래그가 켜져 있고 참여 중일 때만. 실패해도 대시보드는 기다리지 않는다. */}
-      {!attendee && (
-        <Suspense fallback={<AppShortcuts cards={appShortcuts} />}>
-          <AppSummaryCards sub={user.id} shortcuts={appShortcuts} />
-        </Suspense>
+      {/* 강조 카드(오늘 할 일)는 맨 위에 고정, 나머지는 가까운 날짜순(home-order.ts). */}
+      {emphasis.length > 0 && (
+        <div className="grid gap-4 sm:grid-cols-1">
+          {emphasis.map((card) => (
+            <HomeCardLink key={card.id} card={card} />
+          ))}
+        </div>
+      )}
+      {ordered.length > 0 && (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {ordered.map(({ key, node }) => (
+            <div key={key}>{node}</div>
+          ))}
+        </div>
       )}
 
       <PushNotificationSettings

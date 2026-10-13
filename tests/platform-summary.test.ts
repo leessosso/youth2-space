@@ -203,3 +203,24 @@ test("기본 타임아웃은 3초", async () => {
   const { SUMMARY_TIMEOUT_MS } = await import("../src/lib/platform/summary/fetch");
   assert.equal(SUMMARY_TIMEOUT_MS, 3000);
 });
+
+test("홈 카드 날짜 정렬: 오늘·미래 가까운 순 → 지난 날짜 최근 순 → 날짜 없음(원래 순서)", async () => {
+  const { orderByNearestDate, earliestDate } = await import("../src/lib/platform/home-order");
+  const today = "2026-10-13";
+  const out = orderByNearestDate(
+    [
+      { item: "admin", date: null },
+      { item: "meeting", date: "2026-10-25" },
+      { item: "pastA", date: "2026-10-01" },
+      { item: "push", date: null },
+      { item: "training", date: "2026-10-18" },
+      { item: "pastB", date: "2026-10-11" },
+      { item: "tongdok", date: today },
+      { item: "attendance", date: today },
+    ],
+    today,
+  );
+  assert.deepEqual(out, ["tongdok", "attendance", "training", "meeting", "pastB", "pastA", "admin", "push"]);
+  assert.equal(earliestDate(["2026-10-20", null, "2026-10-18", "bad"]), "2026-10-18");
+  assert.equal(earliestDate([null, undefined]), null);
+});
