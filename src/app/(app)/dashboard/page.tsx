@@ -8,7 +8,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { isWebPushConfigured } from "@/lib/firebase-client";
 import { accountLabel } from "@/lib/format";
 import { buildHomeCards, type HomeCard } from "@/lib/platform/home-cards";
-import { earliestDate, orderByNearestDate, type Dated } from "@/lib/platform/home-order";
+import { earliestDate, orderByNearestDate, pickDashboardMeeting, type Dated } from "@/lib/platform/home-order";
 import { fetchAppSummaries } from "@/lib/platform/summary/fetch";
 import { isWeeklyAttendanceOpen, kstDateKeyFromIso, kstDateKeyNow } from "@/lib/kst-date";
 import { resolvePlatformPersonas } from "@/lib/platform/roles";
@@ -46,8 +46,11 @@ export default async function DashboardPage() {
     }
   }
 
+  const today = kstDateKeyNow();
   const meetings = await listMeetings();
-  const upcoming = meetings.find((m) => new Date(m.date) >= new Date()) ?? meetings[0] ?? null;
+  // 오늘(서울) 이후 가장 가까운 모임, 없으면 가장 최근 지난 모임.
+  const pickedMeeting = pickDashboardMeeting(meetings, (m) => kstDateKeyFromIso(m.date), today);
+  const upcoming = pickedMeeting?.meeting ?? null;
 
   const familyReportHref = myGroup ? `/reports/${myGroup.id}` : "/reports";
 
@@ -70,6 +73,7 @@ export default async function DashboardPage() {
     missingAttendanceCount,
     myAttendanceMissing,
     nextMeetingTitle: upcoming?.title ?? null,
+    nextMeetingIsPast: pickedMeeting?.kind === "past",
     nextMeetingHref: upcoming ? `/meetings/${upcoming.id}` : null,
   });
 
@@ -77,11 +81,10 @@ export default async function DashboardPage() {
   const programs = summaries?.training?.programs.filter((p) => p.status === "active") ?? [];
   const cohorts = summaries?.tongdok?.cohorts ?? [];
 
-  const today = kstDateKeyNow();
   const sundayKey = latestSunday ? kstDateKeyFromIso(latestSunday.date) : null;
   // 이번 주 출석은 입력 기간 중이면 '오늘'로 본다.
   const attendanceDate = sundayKey && isWeeklyAttendanceOpen(sundayKey) ? today : sundayKey;
-  const meetingDate = upcoming ? kstDateKeyFromIso(upcoming.date) : null;
+  const meetingDate = pickedMeeting?.date ?? null;
   const cardDate = (card: HomeCard): string | null => {
     switch (card.id) {
       case "weekly_attendance":
