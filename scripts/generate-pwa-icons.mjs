@@ -1,7 +1,12 @@
 /**
- * PWA 아이콘 — 마스터 PNG만 사용 (승인 아트워크, 수정·대체 생성 없음)
- * 마스터: pwa-icons/icon-source.png
+ * PWA 아이콘 — 현재 아이덴티티(흰 바탕 + 주황 인물 로고) 유지.
+ * 마스터: pwa-icons/logo-orange.png (투명 배경, 로고 영역만 잘라 둔 주황 로고)
+ *   - 기존 배포 icon-512.png에서 흰 배경을 알파로 되돌려 추출. 하트는 투명 구멍.
+ *   - pwa-icons/icon-source.png(파란 '등촌' 아트)는 더 이상 쓰지 않는다.
  * 실행: npm run icons:generate
+ *
+ * any: 투명 배경, 로고를 캔버스 가로에 꽉 차게(여백 ANY_PADDING). Android 자동 스플래시에서 크게 보인다.
+ * maskable: 흰 배경, 로고의 모든 픽셀이 지름 80% 안전 원 안에 들어가는 최대 크기.
  */
 import sharp from "sharp";
 import { mkdir, writeFile, access } from "node:fs/promises";
@@ -11,55 +16,76 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
 const outDir = path.join(root, "public", "icons");
-const masterPath = path.join(root, "pwa-icons", "icon-source.png");
+const masterPath = path.join(root, "pwa-icons", "logo-orange.png");
 
-async function loadMaster() {
-  try {
-    await access(masterPath);
-  } catch {
-    throw new Error(
-      `마스터 아이콘이 없습니다: ${masterPath}\n승인 PNG를 해당 경로에 두고 다시 실행하세요.`,
-    );
+/** manifest background_color와 같아야 한다. */
+export const ICON_BACKGROUND = "#ffffff";
+const ANY_PADDING = 0.03;
+/** 안전 영역 반지름(캔버스 대비) — 0.4 = 지름 80%. 안티앨리어싱 여유 2%. */
+const SAFE_RADIUS = 0.4 * 0.98;
+
+try {
+  await access(masterPath);
+} catch {
+  throw new Error(`마스터 로고가 없습니다: ${masterPath}`);
+}
+const master = sharp(masterPath).ensureAlpha();
+const { width: mw, height: mh } = await master.metadata();
+const { data: alpha } = await master.clone().extractChannel(3).raw().toBuffer({ resolveWithObject: true });
+
+/** 로고 중심(바운딩 박스 중심)에서 보이는 픽셀까지의 최대 거리. */
+let maxR = 0;
+for (let y = 0; y < mh; y += 1) {
+  for (let x = 0; x < mw; x += 1) {
+    if (alpha[y * mw + x] > 8) {
+      maxR = Math.max(maxR, Math.hypot(x + 0.5 - mw / 2, y + 0.5 - mh / 2));
+    }
   }
-  return sharp(masterPath).ensureAlpha().png().toBuffer();
 }
 
-/**
- * maskable: 마스터를 512에 맞춤(그래픽 크게 유지).
- * 추가 10% 축소 패딩 없음 — 승인 아트가 이미 캔버스를 채움.
- */
-async function maskablePng(size, masterBuf) {
-  return sharp(masterBuf)
-    .resize(size, size, { fit: "cover", position: "centre" })
+async function logoAt(scale) {
+  const w = Math.max(1, Math.round(mw * scale));
+  const h = Math.max(1, Math.round(mh * scale));
+  return { w, h, buf: await sharp(masterPath).resize(w, h, { kernel: "lanczos3" }).png().toBuffer() };
+}
+
+async function composite(size, scale, background) {
+  const { w, h, buf } = await logoAt(scale);
+  return sharp({
+    create: { width: size, height: size, channels: 4, background: background ?? { r: 0, g: 0, b: 0, alpha: 0 } },
+  })
+    .composite([{ input: buf, left: Math.round((size - w) / 2), top: Math.round((size - h) / 2) }])
     .png()
     .toBuffer();
 }
 
-const masterBuf = await loadMaster();
+const anyScale = (size) => Math.min((size * (1 - 2 * ANY_PADDING)) / mw, (size * (1 - 2 * ANY_PADDING)) / mh);
+const maskableScale = (size) => (SAFE_RADIUS * size) / maxR;
+
+const anyPng = (size) => composite(size, anyScale(size));
+const maskablePng = (size) => composite(size, maskableScale(size), ICON_BACKGROUND);
+/** 파비콘은 탭 바탕이 어두울 수 있어 흰 바탕을 유지한다. */
+const faviconPng = (size) => composite(size, anyScale(size), ICON_BACKGROUND);
 
 await mkdir(outDir, { recursive: true });
+for (const size of [192, 512]) {
+  await writeFile(path.join(outDir, `icon-${size}.png`), await anyPng(size));
+  await writeFile(path.join(outDir, `icon-${size}-maskable.png`), await maskablePng(size));
+  console.log(`wrote icon-${size}.png, icon-${size}-maskable.png`);
+}
 
-const png192 = await sharp(masterBuf).resize(192, 192, { fit: "cover" }).png().toBuffer();
-await writeFile(path.join(outDir, "icon-192.png"), png192);
-console.log("wrote icon-192.png");
+/** iOS는 투명 영역을 검게 채우므로 흰 바탕 불투명 아이콘을 따로 둔다(모서리는 iOS가 살짝만 깎는다). */
+await writeFile(path.join(outDir, "apple-touch-icon.png"), await composite(180, ((180 * 0.9) / mw), ICON_BACKGROUND));
+console.log("wrote apple-touch-icon.png");
 
-const png512 = await sharp(masterBuf).resize(512, 512, { fit: "cover" }).png().toBuffer();
-await writeFile(path.join(outDir, "icon-512.png"), png512);
-console.log("wrote icon-512.png");
-
-const maskable = await maskablePng(512, masterBuf);
-await writeFile(path.join(outDir, "icon-512-maskable.png"), maskable);
-console.log("wrote icon-512-maskable.png");
-
-const favicon = await sharp(masterBuf).resize(32, 32, { fit: "cover" }).png().toBuffer();
-await writeFile(path.join(root, "public", "favicon.png"), favicon);
+await writeFile(path.join(root, "public", "favicon.png"), await faviconPng(32));
 console.log("wrote public/favicon.png");
 
 const icoSizes = [16, 32, 48];
 const icoPngs = await Promise.all(
   icoSizes.map(async (size) => ({
     size,
-    buf: await sharp(masterBuf).resize(size, size, { fit: "cover" }).png().toBuffer(),
+    buf: await faviconPng(size),
   })),
 );
 await writeFile(path.join(root, "src", "app", "favicon.ico"), pngsToIco(icoPngs));
