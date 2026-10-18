@@ -42,6 +42,8 @@ const cardToneClass = {
   success: "border-success/20 bg-success-muted text-sm text-success",
   /** 담당 없음 등 빈 상태 */
   empty: "text-center text-stone-600",
+  /** 확인이 필요한 항목 (예: 안 읽은 돌봄카드) */
+  attention: "border-accent/40 bg-accent/10",
 } as const;
 
 /**

@@ -5,7 +5,7 @@ import { FamilyReportThread } from "@/components/family-report-thread";
 import { Card } from "@/components/ui";
 import { isPastorOrAdmin, leaderCanAccessGroup } from "@/lib/auth";
 import { getGroupById, listMembersByGroup } from "@/lib/store/groups";
-import { getThreadByGroup, listMessagesByThread } from "@/lib/store/reports";
+import { getThreadByGroup, listMessagesByThread, markThreadReadByUser } from "@/lib/store/reports";
 import { getUsersByIds } from "@/lib/store/users";
 
 export default async function FamilyReportPage({
@@ -32,6 +32,10 @@ export default async function FamilyReportPage({
     getThreadByGroup(groupId),
     group.currentLeaderId ? getUsersByIds([group.currentLeaderId]) : Promise.resolve(new Map()),
   ]);
+
+  if (thread && isPastorOrAdmin(user.role)) {
+    await markThreadReadByUser(thread.id, user.id);
+  }
 
   const rawMessages = thread ? await listMessagesByThread(thread.id) : [];
   const authors = await getUsersByIds(rawMessages.map((m) => m.authorId));

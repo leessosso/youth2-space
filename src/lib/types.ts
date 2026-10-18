@@ -162,6 +162,8 @@ export type PastoralThread = {
   groupId: string;
   createdAt: string;
   updatedAt: string;
+  /** 사용자(userId)가 이 방을 마지막으로 연 시각. 없으면 안 읽음으로 본다. */
+  readAtByUser?: Record<string, string>;
 };
 
 /** 돌봄카드 메시지. aboutMemberId가 있으면 특정 가족원 관련 글. */

@@ -33,6 +33,22 @@ export async function getLatestMessageByGroup(groupId: string): Promise<Pastoral
   return messages.at(-1) ?? null;
 }
 
+/** 가족 목록용: 방·최근 글을 함께 가져온다. 방이 없으면 둘 다 null. */
+export async function getThreadSummaryByGroup(
+  groupId: string,
+): Promise<{ thread: PastoralThread | null; latest: PastoralMessage | null }> {
+  const thread = await getThreadByGroup(groupId);
+  if (!thread) return { thread: null, latest: null };
+  const messages = await listMessagesByThread(thread.id);
+  return { thread, latest: messages.at(-1) ?? null };
+}
+
+/** 목사·관리자가 가족 방을 열 때 그 사용자의 읽음 시각을 기록한다. */
+export async function markThreadReadByUser(threadId: string, userId: string): Promise<void> {
+  const now = new Date().toISOString();
+  await pastoralThreadsCol.doc(threadId).update({ [`readAtByUser.${userId}`]: now });
+}
+
 export async function sendFamilyMessage(params: {
   groupId: string;
   authorId: string;
