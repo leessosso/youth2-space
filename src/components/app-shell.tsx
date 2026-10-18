@@ -45,6 +45,17 @@ function navFor(
   return items;
 }
 
+const accountLinkClass =
+  "block whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted";
+
+function AccountLink() {
+  return (
+    <Link href="/account" className={accountLinkClass}>
+      내 계정
+    </Link>
+  );
+}
+
 function LogoutButton({ className }: { className?: string }) {
   return (
     <form
@@ -54,10 +65,7 @@ function LogoutButton({ className }: { className?: string }) {
       }}
       className={className}
     >
-      <button
-        type="submit"
-        className="w-full whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted"
-      >
+      <button type="submit" className={`w-full ${accountLinkClass}`}>
         로그아웃
       </button>
     </form>
@@ -96,7 +104,8 @@ export function AppShell({
         )}
         <div className="mt-auto border-t border-border px-3 py-4">
           <p className="truncate px-3 text-sm font-medium">{user.name}</p>
-          <LogoutButton className="mt-2" />
+          <AccountLink />
+          <LogoutButton />
         </div>
       </aside>
 
@@ -117,7 +126,12 @@ export function AppShell({
                 <AppNavDrawer
                   items={nav}
                   showPlatform={!isMeetingAttendee(user.role)}
-                  footer={<LogoutButton />}
+                  footer={
+                    <>
+                      <AccountLink />
+                      <LogoutButton />
+                    </>
+                  }
                 />
               }
             />
