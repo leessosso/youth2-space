@@ -63,14 +63,14 @@ export async function createUser(data: {
   email: string;
   passwordHash: string;
   name: string;
-  phone: string;
+  phone: string | null;
   role: Role;
   attendeeKind?: AttendeeKind | null;
   officerTitle?: OfficerTitle | null;
   mustChangePassword?: boolean;
 }): Promise<User> {
   const ref = usersCol.doc();
-  const phone = normalizePhone(data.phone);
+  const phone = data.phone ? normalizePhone(data.phone) || null : null;
   const user: Omit<User, "id"> = {
     email: data.email,
     passwordHash: data.passwordHash,

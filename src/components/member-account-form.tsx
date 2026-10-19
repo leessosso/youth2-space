@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useId, useState, useTransition, type ReactNode } from "react";
 import { Button, Input, Label } from "@/components/ui";
+import { DEFAULT_INITIAL_PASSWORD } from "@/lib/initial-password";
 import { normalizePhone, phonesMatch } from "@/lib/phone";
 
 type ActionResult = { ok: true } | { ok: false; error: string };
@@ -184,22 +185,23 @@ export function AppointMemberForm({
           </label>
           {mode === "new" && (
             <div className="grid gap-2">
-              <Input name="email" type="email" required autoComplete="off" placeholder="이메일 (연락용)" />
+              <p className="text-sm text-stone-600">
+                이름만 있으면 됩니다. 이메일과 전화번호는 비워도 되고, 이메일에는 아무 글이나 넣어도 됩니다. 처음 비밀번호는 {DEFAULT_INITIAL_PASSWORD}입니다.
+              </p>
+              <Input name="email" type="text" autoComplete="off" placeholder="이메일 (비워도 됩니다)" />
               <Input
                 key={member?.id}
                 name="phone"
                 type="tel"
-                required
                 autoComplete="off"
                 defaultValue={member?.phone ?? ""}
-                placeholder="전화번호 (로그인용)"
+                placeholder="전화번호 (비워도 됩니다)"
               />
               <Input
                 name="password"
-                type="password"
-                required
-                minLength={8}
+                type="text"
                 autoComplete="new-password"
+                defaultValue={DEFAULT_INITIAL_PASSWORD}
                 placeholder="처음 비밀번호"
               />
             </div>

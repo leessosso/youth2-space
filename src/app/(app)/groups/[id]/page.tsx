@@ -72,18 +72,18 @@ export default async function GroupDetailPage({
         </ul>
         {canAdmin && (
           <p className="border-t border-muted px-4 py-3 text-sm text-stone-600 sm:px-5">
-            가족원 추가는{" "}
-            <Link href="/admin/members" className="font-medium text-foreground underline">
+            명단에 없는 이름은{" "}
+            <Link href="/admin/members#add-member" className="font-medium text-foreground underline">
               성도 명단
             </Link>
-            에서 합니다.
+            의 한 명 추가에 넣습니다. 이 가족으로 넣는 것은 「이 가족으로 넣기」에서 합니다.
           </p>
         )}
       </Card>
 
       {canAdmin && (
         <Card>
-          <CardHeader title="가족원 소속 변경" subtitle="다른 가족에서 이 가족으로 이동" />
+          <CardHeader title="이 가족으로 넣기" subtitle="명단에 있고 이 가족이 아닌 사람을 옮깁니다." />
           <ul className="divide-y divide-muted">
             {allMembers
               .filter((m) => m.groupId !== id)

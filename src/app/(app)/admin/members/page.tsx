@@ -113,29 +113,34 @@ export default async function MemberRosterPage() {
           </div>
         </Card>
 
-        <Card padding="md">
-          <h3 className="text-sm font-medium text-foreground">한 명 추가</h3>
-          <form
-            action={async (formData) => {
-              "use server";
-              await createMember(
-                String(formData.get("name") ?? ""),
-                String(formData.get("phone") ?? "") || undefined,
-              );
-            }}
-            className="mt-3 space-y-3"
-          >
-            <div>
-              <Label>이름</Label>
-              <Input name="name" required placeholder="이름" />
-            </div>
-            <div>
-              <Label>연락처</Label>
-              <Input name="phone" placeholder="연락처" />
-            </div>
-            <Button type="submit">추가</Button>
-          </form>
-        </Card>
+        <div id="add-member" className="scroll-mt-24">
+          <Card padding="md">
+            <h3 className="text-sm font-medium text-foreground">한 명 추가</h3>
+            <p className="mt-1 text-sm text-stone-600">
+              명단에 없는 사람을 넣습니다. 어느 가족인지는 그 가족 화면의 「이 가족으로 넣기」에서 정합니다.
+            </p>
+            <form
+              action={async (formData) => {
+                "use server";
+                await createMember(
+                  String(formData.get("name") ?? ""),
+                  String(formData.get("phone") ?? "") || undefined,
+                );
+              }}
+              className="mt-3 space-y-3"
+            >
+              <div>
+                <Label>이름</Label>
+                <Input name="name" required placeholder="이름" />
+              </div>
+              <div>
+                <Label>연락처</Label>
+                <Input name="phone" placeholder="연락처" />
+              </div>
+              <Button type="submit">추가</Button>
+            </form>
+          </Card>
+        </div>
       </div>
 
       <MeetingAttendancePanel

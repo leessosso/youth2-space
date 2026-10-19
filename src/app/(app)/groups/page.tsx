@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { createGroupFromMember } from "@/app/actions";
+import { createGroupFromMember, importFamilyFormation } from "@/app/actions";
+import { FamilyFormationImport } from "@/components/family-formation-import";
 import { AppointMemberForm } from "@/components/member-account-form";
 import { Card, CardHeader, Input, Label } from "@/components/ui";
 import { currentUserCanManageApp } from "@/lib/auth";
@@ -73,6 +74,23 @@ export default async function GroupsPage() {
                 <Input name="name" required placeholder="4가족" />
               </div>
             </AppointMemberForm>
+          </div>
+        </Card>
+      )}
+
+      {canAdmin && (
+        <Card padding="md">
+          <h3 className="font-medium text-foreground">가족편성 올리기</h3>
+          <p className="mt-1 text-sm text-stone-600">
+            반기를 시작할 때{" "}
+            <a href="/api/family-formation/template" className="font-medium text-foreground underline">
+              가족편성 양식
+            </a>
+            에 가족명과 이름만 적어 올리거나, 같은 칸으로 만든 구글 시트 공유 주소를 넣습니다. 시트는 링크가 있는
+            누구나 볼 수 있어야 합니다. 가장을 정하면 그 가장을 대표하는 이네 가족이 생기고, 이 표는 그 가족에 사람을 넣습니다.
+          </p>
+          <div className="mt-3">
+            <FamilyFormationImport action={importFamilyFormation} />
           </div>
         </Card>
       )}

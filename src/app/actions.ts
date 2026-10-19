@@ -22,6 +22,7 @@ import {
   listGroups,
 } from "@/lib/store/groups";
 import { appointOfficer, endOfficerYear, vacateOfficer } from "@/lib/store/officers";
+import { DEFAULT_INITIAL_PASSWORD } from "@/lib/initial-password";
 import { hashPassword } from "@/lib/password";
 import { isPhoneLike, normalizePhone } from "@/lib/phone";
 import {
@@ -76,6 +77,13 @@ import {
 } from "@/lib/store/surveys";
 import { parseNamesFromFile } from "@/lib/qr-import";
 import { parseMemberRowsFromFile, parseMemberRowsFromText } from "@/lib/member-import";
+import {
+  checkFormationAgainstRoster,
+  describeFormationResult,
+  formationLooksLikeWorkbook,
+  googleSheetExportUrl,
+  parseFamilyFormationWorkbook,
+} from "@/lib/family-formation";
 import { MAX_MEETING_ASSET_BYTES } from "@/lib/meeting-assets";
 import { uploadMeetingFile } from "@/lib/storage";
 import { isValidPollDateKey } from "@/lib/poll-day";
@@ -270,24 +278,32 @@ export async function startNextFamilyTerm() {
 function readAccountCredentials(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const phoneRaw = String(formData.get("phone") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false as const, error: "이메일을 확인해 주세요." };
-  if (!isPhoneLike(phoneRaw)) return { ok: false as const, error: "로그인용 전화번호를 확인해 주세요." };
+  const password = String(formData.get("password") ?? "").trim() || DEFAULT_INITIAL_PASSWORD;
+  if (phoneRaw && !isPhoneLike(phoneRaw)) {
+    return { ok: false as const, error: "전화번호는 비우거나, 실제 번호 형식으로 넣어 주세요." };
+  }
   if (password.length < 8) return { ok: false as const, error: "비밀번호는 8자 이상이어야 합니다." };
-  return { ok: true as const, email, phone: normalizePhone(phoneRaw), password };
+  return {
+    ok: true as const,
+    email,
+    phone: phoneRaw ? normalizePhone(phoneRaw) : null,
+    password,
+  };
 }
 
 async function createNamedAccount(input: {
   name: string;
   email: string;
-  phone: string;
+  phone: string | null;
   password: string;
   role: Role;
   attendeeKind: AttendeeKind | null;
 }) {
-  const existing = await getUserByEmail(input.email);
-  if (existing) return { ok: false as const, error: "이미 등록된 이메일입니다." };
-  if (await isPhoneUsedByAnotherUser(input.phone)) {
+  if (input.email) {
+    const existing = await getUserByEmail(input.email);
+    if (existing) return { ok: false as const, error: "이미 등록된 이메일입니다." };
+  }
+  if (input.phone && (await isPhoneUsedByAnotherUser(input.phone))) {
     return { ok: false as const, error: "이미 등록된 전화번호입니다. 기존 계정을 연결해 주세요." };
   }
   const user = await createUser({
@@ -302,7 +318,12 @@ async function createNamedAccount(input: {
   return { ok: true as const, user };
 }
 
-async function createLeaderNamedAccount(input: { name: string; email: string; phone: string; password: string }) {
+async function createLeaderNamedAccount(input: {
+  name: string;
+  email: string;
+  phone: string | null;
+  password: string;
+}) {
   return createNamedAccount({ ...input, role: "LEADER", attendeeKind: null });
 }
 
@@ -853,6 +874,95 @@ export async function importGroupMembers(formData: FormData) {
   revalidatePath("/groups");
   revalidatePath("/admin/members");
   return { ok: true as const, added, skipped };
+}
+
+const MAX_FORMATION_BYTES = 5 * 1024 * 1024;
+
+async function loadFormationWorkbook(formData: FormData) {
+  const file = formData.get("file");
+  const sheetUrl = String(formData.get("sheetUrl") ?? "").trim();
+  const hasFile = file instanceof File && file.size > 0;
+  if (hasFile && sheetUrl) return { ok: false as const, error: "파일과 구글 시트 주소 중 하나만 넣어 주세요." };
+  if (!hasFile && !sheetUrl) return { ok: false as const, error: "양식 파일이나 구글 시트 주소를 넣어 주세요." };
+
+  if (hasFile && file instanceof File) {
+    if (file.size > MAX_FORMATION_BYTES) return { ok: false as const, error: "파일이 너무 큽니다." };
+    const buffer = Buffer.from(await file.arrayBuffer());
+    if (!formationLooksLikeWorkbook(buffer)) {
+      return { ok: false as const, error: "xlsx 파일로 저장해 주세요." };
+    }
+    return { ok: true as const, buffer };
+  }
+
+  const target = googleSheetExportUrl(sheetUrl);
+  if (!target.ok) return target;
+  let response: Response;
+  try {
+    response = await fetch(target.url, { redirect: "follow" });
+  } catch {
+    return { ok: false as const, error: "구글 시트에 연결하지 못했습니다." };
+  }
+  const length = Number(response.headers.get("content-length") ?? "0");
+  if (length > MAX_FORMATION_BYTES) return { ok: false as const, error: "시트가 너무 큽니다." };
+  const buffer = Buffer.from(await response.arrayBuffer());
+  if (!response.ok || buffer.length > MAX_FORMATION_BYTES || !formationLooksLikeWorkbook(buffer)) {
+    return {
+      ok: false as const,
+      error: "시트를 읽지 못했습니다. 링크가 있는 누구나 볼 수 있게 공유했는지 확인해 주세요.",
+    };
+  }
+  return { ok: true as const, buffer };
+}
+
+/** 이미 생긴 이번 학기 가족에, 표의 가족명·이름대로 가족원을 넣는다. 임원·목사만. */
+export async function importFamilyFormation(formData: FormData) {
+  if (!(await requireAppManager())) return { ok: false as const, error: "권한이 없습니다." };
+
+  const loaded = await loadFormationWorkbook(formData);
+  if (!loaded.ok) return loaded;
+  const parsed = await parseFamilyFormationWorkbook(loaded.buffer);
+  if (!parsed.ok) return parsed;
+
+  const members = await listAllMembers();
+  const groups = await listGroups();
+  const rosterError = checkFormationAgainstRoster(parsed.families, {
+    members: members.map((member) => ({ name: member.name, userId: member.userId })),
+    groups: groups.map((group) => ({ name: group.name, currentLeaderId: group.currentLeaderId })),
+  });
+  if (rosterError) return { ok: false as const, error: rosterError };
+
+  const memberByName = new Map(members.map((member) => [member.name.trim(), member]));
+  const counts = { membersCreated: 0, membersMoved: 0 };
+  for (const family of parsed.families) {
+    const group = groups.find((item) => item.name === family.name);
+    if (!group) return { ok: false as const, error: `${family.name} 가족이 이번 학기에 없습니다. 가장을 먼저 정해 주세요.` };
+    for (const person of family.members) {
+      let member = memberByName.get(person.name);
+      if (!member) {
+        member = await createMemberStore("", person.name, null);
+        memberByName.set(person.name, member);
+        counts.membersCreated += 1;
+      }
+      await placeFormationMember(member, group.id, counts);
+    }
+  }
+
+  revalidatePath("/groups");
+  revalidatePath("/admin/members");
+  revalidatePath("/admin/handover");
+  revalidatePath("/dashboard");
+  return { ok: true as const, message: describeFormationResult(counts) };
+}
+
+async function placeFormationMember(
+  member: { id: string; groupId: string },
+  groupId: string,
+  counts: { membersMoved: number },
+) {
+  if (member.groupId === groupId) return;
+  await assignMemberToGroupStore(member.id, groupId);
+  member.groupId = groupId;
+  counts.membersMoved += 1;
 }
 
 /** 임원·목사가 비정기 출석체크를 연다. 매주 주일 출석은 여기서 만들지 않는다. */
