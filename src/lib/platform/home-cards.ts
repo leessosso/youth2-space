@@ -66,6 +66,8 @@ export type HomeCardBuildContext = {
   /** 오늘(서울) 이후 모임이 없어 지난 모임을 보여줄 때 true. */
   nextMeetingIsPast?: boolean;
   nextMeetingHref: string | null;
+  /** 게스트인데 오늘까지 열린 모임이 없을 때. */
+  nextMeetingClosed?: boolean;
 };
 
 function cardDefinitions(ctx: HomeCardBuildContext): Record<HomeCardId, HomeCard> {
@@ -137,9 +139,11 @@ function cardDefinitions(ctx: HomeCardBuildContext): Record<HomeCardId, HomeCard
     upcoming_meeting: {
       id: "upcoming_meeting",
       title: "리더 모임",
-      description: ctx.nextMeetingTitle
-        ? `${ctx.nextMeetingIsPast ? "지난 모임" : "다가오는 모임"}: ${ctx.nextMeetingTitle}`
-        : "월례 리더 모임 일정과 자료",
+      description: ctx.nextMeetingClosed
+        ? "이번 리더모임 참석이 열려 있지 않습니다."
+        : ctx.nextMeetingTitle
+          ? `${ctx.nextMeetingIsPast ? "지난 모임" : "다가오는 모임"}: ${ctx.nextMeetingTitle}`
+          : "월례 리더 모임 일정과 자료",
       href: ctx.nextMeetingHref ?? "/meetings",
       variant: "default",
     },

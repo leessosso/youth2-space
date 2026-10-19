@@ -121,6 +121,8 @@ export type LeaderMeeting = {
   dutyUserIds?: Partial<Record<ServingDutyKey, string | null>>;
   /** 이번 주 말씀. 구절과 본문을 한 글에 적는다. 빈 문자열이면 비운 것. */
   scripture?: string | null;
+  /** 이 모임에 넣은 게스트 계정. 모임 날(서울)이 지나면 접근이 닫히고, 계정은 남는다. */
+  guestUserIds?: string[];
   createdAt: string;
 };
 

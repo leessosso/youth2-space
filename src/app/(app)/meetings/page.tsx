@@ -1,26 +1,34 @@
 import Link from "next/link";
 import { createLeaderMeeting } from "@/app/actions";
+import { GuestAccessClosed } from "@/components/guest-access-closed";
 import { Button, Card, CardHeader, Input, Label, Textarea } from "@/components/ui";
-import { currentUserCanManageApp } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { formatDateTimeKo } from "@/lib/format";
+import { kstDateKeyNow } from "@/lib/kst-date";
+import { guestCanOpenMeeting, isScopedMeetingGuest } from "@/lib/meeting-guest";
 import { listMeetings } from "@/lib/store/meetings";
-import type { LeaderMeeting } from "@/lib/types";
+import { canManageApp, type LeaderMeeting } from "@/lib/types";
 
 export default async function MeetingsPage() {
-  const canAdmin = await currentUserCanManageApp();
+  const currentUser = await getCurrentUser();
+  const canAdmin = currentUser ? canManageApp(currentUser) : false;
+  const scopedGuest = currentUser ? isScopedMeetingGuest(currentUser) : false;
 
   const meetings = await listMeetings();
+  const visibleMeetings = scopedGuest && currentUser
+    ? meetings.filter((meeting) => guestCanOpenMeeting(meeting, currentUser.id, kstDateKeyNow()))
+    : meetings;
 
   const now = new Date();
-  const upcoming = meetings.filter((m) => new Date(m.date) >= now);
-  const past = meetings.filter((m) => new Date(m.date) < now);
+  const upcoming = visibleMeetings.filter((m) => new Date(m.date) >= now);
+  const past = visibleMeetings.filter((m) => new Date(m.date) < now);
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold">리더모임</h2>
         <p className="text-sm text-stone-600">
-          매주 기도회, 말씀 교안 나눔, 교안 해설, 그 주 광고 순으로 진행합니다. 나눔에는 가장, 임원, 새가족팀원, 게스트(부가장·형제자매)가 함께합니다.
+          매주 기도회, 말씀 교안 나눔, 교안 해설, 그 주 광고 순으로 진행합니다. 가장이 못 오는 날은 그 주 모임에서 부가장을 넣습니다. 처음이면 계정을 만들고, 다음부터는 있는 계정을 그 모임에만 넣습니다. 모임 날까지 교안·배정모자·공지를 보고, 그 날이 지나면 접근이 닫힙니다. 계정은 남습니다.
         </p>
       </div>
 
@@ -62,10 +70,14 @@ export default async function MeetingsPage() {
           </Card>
         )}
 
-        <div className="grid gap-6 xl:grid-cols-2">
-          <Section title="예정된 모임" items={upcoming} />
-          <Section title="지난 모임" items={past} />
-        </div>
+        {scopedGuest && visibleMeetings.length === 0 ? (
+          <GuestAccessClosed />
+        ) : (
+          <div className="grid gap-6 xl:grid-cols-2">
+            <Section title={scopedGuest ? "이번 모임" : "예정된 모임"} items={scopedGuest ? visibleMeetings : upcoming} />
+            {!scopedGuest && <Section title="지난 모임" items={past} />}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -3,9 +3,13 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { deleteAnnouncement, updateAnnouncement } from "@/app/actions";
 import { AnnouncementForm } from "@/components/announcement-form";
+import { GuestAccessClosed } from "@/components/guest-access-closed";
 import { Badge, Button, Card, Notice } from "@/components/ui";
 import { formatDateTimeKo, roleLabel } from "@/lib/format";
+import { kstDateKeyNow } from "@/lib/kst-date";
+import { guestHasOpenMeeting, isScopedMeetingGuest } from "@/lib/meeting-guest";
 import { audienceLabel, getAnnouncementById } from "@/lib/store/announcements";
+import { listMeetings } from "@/lib/store/meetings";
 import { getUserById, getUsersByIds, listLoginUsersForServing } from "@/lib/store/users";
 import { canManageAnnouncements } from "@/lib/types";
 
@@ -21,6 +25,17 @@ export default async function AnnouncementDetailPage({
   const session = await auth();
   const fullUser = await getUserById(session!.user.id);
   const canManage = fullUser ? canManageAnnouncements(fullUser) : false;
+  if (fullUser && isScopedMeetingGuest(fullUser)) {
+    const meetings = await listMeetings();
+    if (!guestHasOpenMeeting(meetings, fullUser.id, kstDateKeyNow())) {
+      return (
+        <div className="space-y-6">
+          <Link href="/announcements" className="text-sm text-stone-600 underline">← 공지 목록</Link>
+          <GuestAccessClosed />
+        </div>
+      );
+    }
+  }
 
   const announcement = await getAnnouncementById(id);
   if (!announcement) notFound();

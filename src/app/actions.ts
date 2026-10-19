@@ -46,9 +46,11 @@ import {
 } from "@/lib/store/announcements";
 import {
   addMeetingAsset,
+  addMeetingGuest as addMeetingGuestStore,
   createMeeting,
   getMeetingAssetById,
   getMeetingById,
+  removeMeetingGuest as removeMeetingGuestStore,
   setMeetingAssetPublished,
   setMeetingDutyUser,
   setMeetingPrayerLeader,
@@ -567,6 +569,77 @@ export async function setMeetingServingDuty(
 
   revalidatePath(`/meetings/${meetingId}`);
   return { ok: true };
+}
+
+function revalidateMeetingGuestPaths(meetingId: string) {
+  revalidatePath("/meetings");
+  revalidatePath(`/meetings/${meetingId}`);
+  revalidatePath("/dashboard");
+  revalidatePath("/announcements");
+  revalidatePath("/hat");
+}
+
+async function resolveGuestForMember(formData: FormData) {
+  const memberId = String(formData.get("memberId") ?? "").trim();
+  const member = memberId ? await getMemberById(memberId) : null;
+  if (!member) return { ok: false as const, error: "성도를 선택해 주세요." };
+
+  if (member.userId) {
+    const user = await getUserById(member.userId);
+    if (!user || user.role !== "ATTENDEE" || user.attendeeKind === "new_family") {
+      return { ok: false as const, error: "가장·임원·새가족팀원 계정은 이 모임 게스트로 넣을 수 없습니다." };
+    }
+    return { ok: true as const, user };
+  }
+
+  const mode = String(formData.get("accountMode") ?? "");
+  if (mode === "existing") {
+    const linkUserId = String(formData.get("linkUserId") ?? "").trim();
+    if (!linkUserId) return { ok: false as const, error: "연결할 계정을 선택해 주세요." };
+    const user = await getUserById(linkUserId);
+    if (!user || user.role !== "ATTENDEE" || user.attendeeKind === "new_family") {
+      return { ok: false as const, error: "게스트 계정을 선택해 주세요." };
+    }
+    const linked = await linkMemberToLeader(member.id, user.id);
+    if (!linked.ok) return linked;
+    return { ok: true as const, user };
+  }
+
+  const credentials = readAccountCredentials(formData);
+  if (!credentials.ok) return credentials;
+  const created = await createNamedAccount({
+    name: member.name,
+    email: credentials.email,
+    phone: credentials.phone,
+    password: credentials.password,
+    role: "ATTENDEE",
+    attendeeKind: "guest",
+  });
+  if (!created.ok) return created;
+  await linkMemberUser(member.id, created.user.id);
+  return { ok: true as const, user: created.user };
+}
+
+/** 성도를 이 리더모임 게스트로 넣는다. 계정이 없으면 만들고, 있으면 생성 없이 넣는다. */
+export async function placeMemberAsMeetingGuest(meetingId: string, formData: FormData) {
+  if (!(await requireAppManager())) return { ok: false as const, error: "권한이 없습니다." };
+  const meeting = await getMeetingById(meetingId);
+  if (!meeting) return { ok: false as const, error: "모임을 찾을 수 없습니다." };
+  const resolved = await resolveGuestForMember(formData);
+  if (!resolved.ok) return resolved;
+  await addMeetingGuestStore(meetingId, resolved.user.id);
+  revalidateMeetingGuestPaths(meetingId);
+  revalidatePath("/admin/members");
+  return { ok: true as const };
+}
+
+export async function removeMeetingGuest(meetingId: string, userId: string) {
+  if (!(await requireAppManager())) return { ok: false as const, error: "권한이 없습니다." };
+  const meeting = await getMeetingById(meetingId);
+  if (!meeting) return { ok: false as const, error: "모임을 찾을 수 없습니다." };
+  await removeMeetingGuestStore(meetingId, userId.trim());
+  revalidateMeetingGuestPaths(meetingId);
+  return { ok: true as const };
 }
 
 export async function createLeaderMeeting(data: {

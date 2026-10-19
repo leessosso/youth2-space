@@ -78,6 +78,20 @@ export async function setMeetingDutyUser(
   return { previousUserId };
 }
 
+export async function addMeetingGuest(meetingId: string, userId: string) {
+  const meeting = await getMeetingById(meetingId);
+  if (!meeting) throw new Error("MEETING_NOT_FOUND");
+  const guestUserIds = [...new Set([...(meeting.guestUserIds ?? []), userId])];
+  await leaderMeetingsCol.doc(meetingId).update({ guestUserIds });
+}
+
+export async function removeMeetingGuest(meetingId: string, userId: string) {
+  const meeting = await getMeetingById(meetingId);
+  if (!meeting) throw new Error("MEETING_NOT_FOUND");
+  const guestUserIds = (meeting.guestUserIds ?? []).filter((id) => id !== userId);
+  await leaderMeetingsCol.doc(meetingId).update({ guestUserIds });
+}
+
 export async function listAssetsByMeeting(meetingId: string): Promise<MeetingAsset[]> {
   const snap = await meetingAssetsCol.where("meetingId", "==", meetingId).get();
   return snap.docs

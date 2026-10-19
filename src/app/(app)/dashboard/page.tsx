@@ -11,6 +11,7 @@ import { buildHomeCards, type HomeCard } from "@/lib/platform/home-cards";
 import { earliestDate, orderByNearestDate, pickDashboardMeeting, type Dated } from "@/lib/platform/home-order";
 import { fetchAppSummaries } from "@/lib/platform/summary/fetch";
 import { isWeeklyAttendanceOpen, kstDateKeyFromIso, kstDateKeyNow, targetSundayKey } from "@/lib/kst-date";
+import { guestCanOpenMeeting, isScopedMeetingGuest } from "@/lib/meeting-guest";
 import { resolvePlatformPersonas } from "@/lib/platform/roles";
 import { listMarksBySunday, listWeeklySundaySlots } from "@/lib/store/attendance";
 import { getGroupByCurrentLeader, listGroups } from "@/lib/store/groups";
@@ -53,8 +54,12 @@ export default async function DashboardPage() {
 
   const today = kstDateKeyNow();
   const meetings = await listMeetings();
+  const scopedGuest = actor ? isScopedMeetingGuest(actor) : false;
+  const visibleMeetings = scopedGuest
+    ? meetings.filter((meeting) => guestCanOpenMeeting(meeting, user.id, today))
+    : meetings;
   // 오늘(서울) 이후 가장 가까운 모임, 없으면 가장 최근 지난 모임.
-  const pickedMeeting = pickDashboardMeeting(meetings, (m) => kstDateKeyFromIso(m.date), today);
+  const pickedMeeting = pickDashboardMeeting(visibleMeetings, (m) => kstDateKeyFromIso(m.date), today);
   const upcoming = pickedMeeting?.meeting ?? null;
 
   const familyReportHref = myGroup ? `/reports/${myGroup.id}` : "/reports";
@@ -80,6 +85,7 @@ export default async function DashboardPage() {
     nextMeetingTitle: upcoming?.title ?? null,
     nextMeetingIsPast: pickedMeeting?.kind === "past",
     nextMeetingHref: upcoming ? `/meetings/${upcoming.id}` : null,
+    nextMeetingClosed: scopedGuest && !upcoming,
   });
 
   const summaries = summariesPromise ? await summariesPromise : null;

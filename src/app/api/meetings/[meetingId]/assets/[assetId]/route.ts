@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { kstDateKeyNow } from "@/lib/kst-date";
 import { canViewMeetingAsset, getAssetPreviewKind } from "@/lib/meeting-assets";
-import { getMeetingAssetById } from "@/lib/store/meetings";
+import { guestCanOpenMeeting, isScopedMeetingGuest } from "@/lib/meeting-guest";
+import { getMeetingAssetById, getMeetingById } from "@/lib/store/meetings";
 import { getUserById } from "@/lib/store/users";
 import {
   getAuthenticatedAssetPath,
@@ -30,6 +32,13 @@ export async function GET(
 
   if (!canViewMeetingAsset(asset, actor)) {
     return NextResponse.json({ error: "FORBIDDEN" }, { status: 403 });
+  }
+
+  if (isScopedMeetingGuest(actor)) {
+    const meeting = await getMeetingById(meetingId);
+    if (!meeting || !guestCanOpenMeeting(meeting, actor.id, kstDateKeyNow())) {
+      return NextResponse.json({ error: "FORBIDDEN" }, { status: 403 });
+    }
   }
 
   const { searchParams } = new URL(req.url);

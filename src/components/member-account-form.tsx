@@ -30,6 +30,10 @@ export function AppointMemberForm({
   unlinkedLeaders,
   action,
   submitLabel,
+  submitLabelWhenLinked,
+  linkedMessage = "이 성도는 로그인 계정이 연결되어 있습니다.",
+  memberNote,
+  emptyMessage,
   memberLabel = "성도",
   excludeUserId,
   hidden,
@@ -39,6 +43,11 @@ export function AppointMemberForm({
   unlinkedLeaders: UnlinkedLeaderChoice[];
   action: (formData: FormData) => Promise<ActionResult>;
   submitLabel: string;
+  /** 이미 계정이 있으면 생성 칸을 건너뛰고 이 문구로 저장한다. */
+  submitLabelWhenLinked?: string;
+  linkedMessage?: string;
+  memberNote?: (member: MemberChoice) => string | null;
+  emptyMessage?: string;
   memberLabel?: string;
   excludeUserId?: string | null;
   hidden?: Record<string, string>;
@@ -80,7 +89,7 @@ export function AppointMemberForm({
       <div className="space-y-3">
         {children}
         <p className="text-sm text-stone-600">
-          성도 명단에 앉힐 사람이 없습니다.{" "}
+          {emptyMessage ?? "성도 명단에 앉힐 사람이 없습니다."}{" "}
           <Link href="/admin/members" className="font-medium text-foreground underline">
             성도 명단
           </Link>
@@ -114,9 +123,9 @@ export function AppointMemberForm({
         label={memberLabel}
         value={memberId}
         onValueChange={onMemberChange}
-        note={(item) => (item.userId ? null : "계정 없음")}
+        note={memberNote ?? ((item) => (item.userId ? null : "계정 없음"))}
       />
-      {member?.userId && <p className="text-sm text-stone-600">이 성도는 로그인 계정이 연결되어 있습니다.</p>}
+      {member?.userId && <p className="text-sm text-stone-600">{linkedMessage}</p>}
       {needsAccount && (
         <fieldset className="space-y-3">
           <legend className="text-sm font-medium text-foreground">로그인 계정</legend>
@@ -198,7 +207,7 @@ export function AppointMemberForm({
         </fieldset>
       )}
       <Button type="submit" disabled={pending || !memberId}>
-        {pending ? "저장 중" : submitLabel}
+        {pending ? "저장 중" : member?.userId ? (submitLabelWhenLinked ?? submitLabel) : submitLabel}
       </Button>
       {error && <p className="text-sm text-destructive">{error}</p>}
     </form>

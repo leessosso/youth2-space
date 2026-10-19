@@ -32,7 +32,7 @@ export function MeetingAttendancePanel({
     <Card>
       <CardHeader
         title="리더모임 참석 계정"
-        subtitle="게스트는 가끔 앉는 형제자매입니다. 새가족팀원은 매주 리더모임에 나옵니다. 둘 다 모임 자료, 배정모자, 공지만 봅니다."
+        subtitle="새가족팀원은 매주 리더모임에 나옵니다. 부가장은 그 주 리더모임에서 넣습니다. 처음이면 거기서 계정을 만들고, 계정이 있으면 그 모임에만 넣습니다. 둘 다 출석·돌봄카드는 열리지 않습니다."
       />
       <div className="grid items-start gap-6 p-4 sm:p-5 lg:grid-cols-2">
         <div className="space-y-2">

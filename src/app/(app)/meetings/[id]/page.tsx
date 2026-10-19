@@ -5,15 +5,19 @@ import {
   setPrayerLeader,
   updateMeetingNotes,
 } from "@/app/actions";
+import { GuestAccessClosed } from "@/components/guest-access-closed";
 import { MeetingAssetList } from "@/components/meeting-asset-list";
 import { MeetingFileUpload } from "@/components/meeting-file-upload";
+import { MeetingGuestPanel } from "@/components/meeting-guest-panel";
 import { MeetingScriptureBlock } from "@/components/meeting-scripture";
 import { Button, Card, CardHeader, Textarea } from "@/components/ui";
+import { kstDateKeyNow } from "@/lib/kst-date";
 import { canViewMeetingAsset } from "@/lib/meeting-assets";
+import { guestCanOpenMeeting, guestMeetingDayOpen, isScopedMeetingGuest, meetingGuestIds } from "@/lib/meeting-guest";
 import { resolveMeetingScripture } from "@/lib/meeting-scripture";
 import { getCurrentUser } from "@/lib/auth";
 import { formatDateTimeKo } from "@/lib/format";
-import { listCurrentLeaderUserIds } from "@/lib/store/groups";
+import { listAllMembers, listCurrentLeaderUserIds } from "@/lib/store/groups";
 import { getMeetingById, listAssetsByMeeting } from "@/lib/store/meetings";
 import { getUsersByIds, listLoginUsersForServing } from "@/lib/store/users";
 import {
@@ -38,11 +42,60 @@ export default async function MeetingDetailPage({
   const meeting = await getMeetingById(id);
   if (!meeting) notFound();
 
-  const [assets, loginUsers, leaderIds] = await Promise.all([
+  if (
+    currentUser &&
+    isScopedMeetingGuest(currentUser) &&
+    !guestCanOpenMeeting(meeting, currentUser.id, kstDateKeyNow())
+  ) {
+    return (
+      <div className="space-y-6">
+        <Link href="/meetings" className="text-sm text-stone-600 underline">← 모임 목록</Link>
+        <GuestAccessClosed />
+      </div>
+    );
+  }
+
+  const [assets, loginUsers, leaderIds, roster] = await Promise.all([
     listAssetsByMeeting(id),
     listLoginUsersForServing(),
     listCurrentLeaderUserIds(),
+    canAdmin ? listAllMembers() : Promise.resolve([]),
   ]);
+  const placedGuestIds = new Set(meetingGuestIds(meeting));
+  const placedGuests = [...placedGuestIds].flatMap((guestId) => {
+    const account = loginUsers.find((user) => user.id === guestId);
+    return account ? [{ id: account.id, name: account.name }] : [];
+  });
+  const blockedUserIds = new Set(
+    loginUsers
+      .filter((account) => account.role !== "ATTENDEE" || account.attendeeKind === "new_family")
+      .map((account) => account.id),
+  );
+  const guestMembers = roster
+    .filter((member) => {
+      if (!member.userId) return true;
+      return !blockedUserIds.has(member.userId) && !placedGuestIds.has(member.userId);
+    })
+    .map((member) => ({
+      id: member.id,
+      name: member.name,
+      phone: member.phone,
+      userId: member.userId,
+    }));
+  const linkedUserIds = new Set(roster.flatMap((member) => (member.userId ? [member.userId] : [])));
+  const unlinkedGuests = loginUsers
+    .filter(
+      (account) =>
+        account.role === "ATTENDEE" &&
+        account.attendeeKind !== "new_family" &&
+        !linkedUserIds.has(account.id),
+    )
+    .map((account) => ({
+      id: account.id,
+      name: account.name,
+      email: account.email,
+      phone: account.phone,
+    }));
   const leadersById = await getUsersByIds(leaderIds);
   const familyLeaders = leaderIds
     .map((leaderId) => leadersById.get(leaderId))
@@ -73,6 +126,16 @@ export default async function MeetingDetailPage({
           참석: 가장 · 임원 · 새가족팀원 · 게스트 · 목사
         </p>
       </div>
+
+      {canAdmin && (
+        <MeetingGuestPanel
+          meetingId={id}
+          guests={placedGuests}
+          members={guestMembers}
+          unlinkedGuests={unlinkedGuests}
+          dayOpen={guestMeetingDayOpen(meeting.date, kstDateKeyNow())}
+        />
+      )}
 
       <Card>
         <CardHeader

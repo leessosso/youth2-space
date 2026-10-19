@@ -1,15 +1,30 @@
 import Link from "next/link";
 import { auth } from "@/auth";
+import { GuestAccessClosed } from "@/components/guest-access-closed";
 import { Badge, Button, Card, CardHeader } from "@/components/ui";
 import { formatDateTimeKo } from "@/lib/format";
-import { getUserById } from "@/lib/store/users";
+import { kstDateKeyNow } from "@/lib/kst-date";
+import { guestHasOpenMeeting, isScopedMeetingGuest } from "@/lib/meeting-guest";
 import { audienceLabel, listAnnouncements, listSentAnnouncements } from "@/lib/store/announcements";
+import { listMeetings } from "@/lib/store/meetings";
+import { getUserById } from "@/lib/store/users";
 import { canManageAnnouncements } from "@/lib/types";
 
 export default async function AnnouncementsPage() {
   const session = await auth();
   const fullUser = await getUserById(session!.user.id);
   const canManage = fullUser ? canManageAnnouncements(fullUser) : false;
+  if (fullUser && isScopedMeetingGuest(fullUser)) {
+    const meetings = await listMeetings();
+    if (!guestHasOpenMeeting(meetings, fullUser.id, kstDateKeyNow())) {
+      return (
+        <div className="space-y-6">
+          <h2 className="text-xl font-semibold">공지</h2>
+          <GuestAccessClosed />
+        </div>
+      );
+    }
+  }
 
   const sent = await listSentAnnouncements();
   const drafts = canManage
