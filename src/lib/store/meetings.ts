@@ -51,6 +51,12 @@ export async function updateMeetingScripture(meetingId: string, scripture: strin
   });
 }
 
+export async function updateMeetingLessonText(meetingId: string, lessonText: string) {
+  await leaderMeetingsCol.doc(meetingId).update({
+    lessonText: lessonText.replace(/\r\n?/g, "\n").trim(),
+  });
+}
+
 export async function setMeetingPrayerLeader(meetingId: string, prayerLeaderId: string | null) {
   const result = await setMeetingDutyUser(meetingId, "prayer_meeting_lead", prayerLeaderId);
   return result;

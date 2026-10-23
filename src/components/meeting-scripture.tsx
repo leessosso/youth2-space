@@ -1,5 +1,6 @@
 import { updateMeetingScripture } from "@/app/actions";
 import { Button, Textarea } from "@/components/ui";
+import { MeetingEditorAccordion } from "@/components/meeting-editor-accordion";
 import { scriptureLines } from "@/lib/meeting-scripture";
 
 type Props = {
@@ -38,12 +39,13 @@ export function MeetingScriptureBlock({ meetingId, scripture, canEdit }: Props) 
       )}
 
       {canEdit && (
+        <MeetingEditorAccordion label="본문 입력·수정" defaultOpen={lines.length === 0}>
         <form
           action={async (fd) => {
             "use server";
             await updateMeetingScripture(meetingId, (fd.get("scripture") as string) ?? "");
           }}
-          className="space-y-3 border-t border-border pt-3"
+          className="space-y-3"
         >
           <Textarea
             name="scripture"
@@ -53,6 +55,7 @@ export function MeetingScriptureBlock({ meetingId, scripture, canEdit }: Props) 
           />
           <Button type="submit" variant="secondary">본문 저장</Button>
         </form>
+        </MeetingEditorAccordion>
       )}
     </div>
   );

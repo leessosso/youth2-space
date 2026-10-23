@@ -57,6 +57,7 @@ import {
   setMeetingPrayerLeader,
   updateMeetingNotes as updateMeetingNotesStore,
   updateMeetingScripture as updateMeetingScriptureStore,
+  updateMeetingLessonText as updateMeetingLessonTextStore,
 } from "@/lib/store/meetings";
 import { sendFamilyMessage } from "@/lib/store/reports";
 import { assignGroupSeating as assignGroupSeatingStore, createWorshipService as createWorshipServiceStore } from "@/lib/store/worship";
@@ -690,6 +691,14 @@ export async function updateMeetingNotes(meetingId: string, notes: string) {
 export async function updateMeetingScripture(meetingId: string, scripture: string) {
   if (!(await requireAppManager())) return { error: "권한이 없습니다." };
   await updateMeetingScriptureStore(meetingId, scripture);
+  revalidatePath(`/meetings/${meetingId}`);
+  return { ok: true };
+}
+
+export async function updateMeetingLessonText(meetingId: string, lessonText: string) {
+  if (!(await requireAppManager())) return { error: "권한이 없습니다." };
+  if (lessonText.length > 50_000) return { error: "교안 텍스트는 5만 자 이하로 넣어 주세요." };
+  await updateMeetingLessonTextStore(meetingId, lessonText);
   revalidatePath(`/meetings/${meetingId}`);
   return { ok: true };
 }
