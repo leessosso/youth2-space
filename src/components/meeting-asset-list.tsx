@@ -166,7 +166,7 @@ export function MeetingAssetList({
         <DialogContent
           showCloseButton={false}
           flush
-          className="flex h-[min(90vh,100%)] w-full max-w-4xl flex-col overflow-hidden sm:max-w-4xl"
+          className="flex max-h-[90dvh] w-full max-w-[calc(100%-2rem)] flex-col overflow-hidden sm:max-w-4xl"
           aria-label={preview ? `${preview.fileName} 미리보기` : undefined}
         >
           <DialogHeader variant="bar">
@@ -177,18 +177,18 @@ export function MeetingAssetList({
               닫기
             </Button>
           </DialogHeader>
-          <div className="min-h-0 flex-1 overflow-auto bg-muted p-2 sm:p-3">
+          <div className="min-h-0 overflow-auto bg-muted p-2 sm:p-3">
             {preview?.kind === "pdf" ? (
               <iframe
                 title={preview.fileName}
                 src={preview.url}
-                className="h-[min(80vh,100%)] w-full min-h-[50vh] rounded-lg border border-border bg-surface"
+                className="block h-[calc(90dvh-5rem)] w-full rounded-lg border border-border bg-surface"
               />
             ) : preview ? (
               <img
                 src={preview.url}
                 alt={preview.fileName}
-                className="mx-auto max-h-[min(80vh,100%)] w-auto max-w-full rounded-lg object-contain"
+                className="mx-auto block max-h-[calc(90dvh-5rem)] w-auto max-w-full rounded-lg object-contain"
               />
             ) : null}
           </div>
