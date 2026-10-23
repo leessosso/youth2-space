@@ -2,12 +2,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   setPrayerLeader,
+  updateMeetingLessonText,
   updateMeetingNotes,
 } from "@/app/actions";
 import { GuestAccessClosed } from "@/components/guest-access-closed";
 import { MeetingAssetList } from "@/components/meeting-asset-list";
 import { MeetingFileUpload } from "@/components/meeting-file-upload";
+import { MeetingEditorAccordion } from "@/components/meeting-editor-accordion";
 import { MeetingGuestPanel } from "@/components/meeting-guest-panel";
+import { MeetingLessonText } from "@/components/meeting-lesson-text";
 import { MeetingScriptureBlock } from "@/components/meeting-scripture";
 import { Button, Card, CardHeader, Textarea } from "@/components/ui";
 import { kstDateKeyNow } from "@/lib/kst-date";
@@ -144,6 +147,7 @@ export default async function MeetingDetailPage({
             인도 가장: <span className="font-medium">{prayerLeaderName ?? "미지정"}</span>
           </p>
           {canAdmin && (
+            <MeetingEditorAccordion label="인도 가장 지정" defaultOpen={!prayerLeaderId}>
             <form
               action={async (fd) => {
                 "use server";
@@ -165,6 +169,7 @@ export default async function MeetingDetailPage({
               </select>
               <Button type="submit" variant="secondary">저장</Button>
             </form>
+            </MeetingEditorAccordion>
           )}
           <MeetingAssetList
             meetingId={id}
@@ -173,7 +178,9 @@ export default async function MeetingDetailPage({
             canPublishCommentary={false}
           />
           {canUploadScore ? (
-            <MeetingFileUpload meetingId={id} kind="SCORE" label="악보 업로드" />
+            <MeetingEditorAccordion label="악보 올리기" defaultOpen={scoreAssets.length === 0}>
+              <MeetingFileUpload meetingId={id} kind="SCORE" label="악보 업로드" />
+            </MeetingEditorAccordion>
           ) : (
             <p className="text-xs text-muted-foreground">{SCORE_UPLOAD_NOTICE}</p>
           )}
@@ -191,14 +198,42 @@ export default async function MeetingDetailPage({
             scripture={resolveMeetingScripture(meeting)}
             canEdit={canAdmin}
           />
+          <MeetingLessonText text={meeting.lessonText} />
           <MeetingAssetList
             meetingId={id}
             assets={lessonAssets}
-            emptyLabel="아직 교안 없음"
+            emptyLabel={meeting.lessonText ? "올린 교안 파일 없음" : "아직 교안 없음"}
             canPublishCommentary={false}
           />
           {canAdmin && (
-            <MeetingFileUpload meetingId={id} kind="LESSON" label="교안 업로드" />
+            <MeetingEditorAccordion
+              label="교안 텍스트 입력·수정"
+              defaultOpen={!meeting.lessonText && lessonAssets.length === 0}
+            >
+              <form
+                action={async (fd) => {
+                  "use server";
+                  await updateMeetingLessonText(id, (fd.get("lessonText") as string) ?? "");
+                }}
+                className="space-y-2"
+              >
+                <Textarea
+                  name="lessonText"
+                  rows={12}
+                  defaultValue={meeting.lessonText ?? ""}
+                  placeholder={"워드 교안 내용을 그대로 붙여 넣으세요.\n# 제목\n- 목록\n1. 번호 목록"}
+                />
+                <p className="text-xs text-muted-foreground">
+                  줄바꿈은 그대로 보입니다. 줄 앞에 #을 붙이면 제목, - 나 1. 을 붙이면 목록이 됩니다. 비우고 저장하면 지워집니다.
+                </p>
+                <Button type="submit" variant="secondary">교안 텍스트 저장</Button>
+              </form>
+            </MeetingEditorAccordion>
+          )}
+          {canAdmin && (
+            <MeetingEditorAccordion label="교안 파일 올리기 (이미지·PDF)">
+              <MeetingFileUpload meetingId={id} kind="LESSON" label="교안 업로드" />
+            </MeetingEditorAccordion>
           )}
 
           <div className="-mx-4 divide-y divide-muted border-t border-muted sm:-mx-5">
@@ -230,12 +265,14 @@ export default async function MeetingDetailPage({
             canPublishCommentary={canAdmin}
           />
           {canAdmin && (
-            <MeetingFileUpload
-              meetingId={id}
-              kind="LESSON_COMMENTARY"
-              label="교안 해설지 업로드"
-              hint="업로드 직후 비공개입니다. 공개를 누르면 모임에 앉은 사람에게 보입니다."
-            />
+            <MeetingEditorAccordion label="해설지 올리기" defaultOpen={commentaryAssets.length === 0}>
+              <MeetingFileUpload
+                meetingId={id}
+                kind="LESSON_COMMENTARY"
+                label="교안 해설지 업로드"
+                hint="업로드 직후 비공개입니다. 공개를 누르면 모임에 앉은 사람에게 보입니다."
+              />
+            </MeetingEditorAccordion>
           )}
         </div>
       </Card>
@@ -248,10 +285,15 @@ export default async function MeetingDetailPage({
               "use server";
               await updateMeetingNotes(id, fd.get("notes") as string);
             }}
-            className="p-4 sm:p-5"
+            className="space-y-3 p-4 sm:p-5"
           >
-            <Textarea name="notes" defaultValue={meeting.notes ?? ""} placeholder="이번 주 광고" />
-            <Button type="submit" className="mt-2">저장</Button>
+            {meeting.notes && (
+              <p className="whitespace-pre-wrap text-sm text-stone-700">{meeting.notes}</p>
+            )}
+            <MeetingEditorAccordion label="광고 입력·수정" defaultOpen={!meeting.notes}>
+              <Textarea name="notes" defaultValue={meeting.notes ?? ""} placeholder="이번 주 광고" />
+              <Button type="submit">저장</Button>
+            </MeetingEditorAccordion>
           </form>
         ) : (
           <p className="whitespace-pre-wrap px-4 py-3 text-sm text-stone-700 sm:px-5">
