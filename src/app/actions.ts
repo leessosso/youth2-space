@@ -61,7 +61,7 @@ import {
 } from "@/lib/store/meetings";
 import { sendFamilyMessage } from "@/lib/store/reports";
 import { assignGroupSeating as assignGroupSeatingStore, createWorshipService as createWorshipServiceStore } from "@/lib/store/worship";
-import { canEditWeeklyAttendance, kstDateKeyFromIso, weeklyAttendanceLockedMessage } from "@/lib/kst-date";
+import { canEditWeeklyAttendance, kstDateKeyFromIso, kstLocalDateTimeToIso, weeklyAttendanceLockedMessage } from "@/lib/kst-date";
 import {
   createSpecialAttendance as createSpecialAttendanceStore,
   importQrNames,
@@ -673,7 +673,7 @@ export async function createLeaderMeeting(data: {
 
   const meeting = await createMeeting({
     title: data.title,
-    date: new Date(data.date).toISOString(),
+    date: kstLocalDateTimeToIso(data.date),
     notes: data.notes || null,
   });
   revalidatePath("/meetings");

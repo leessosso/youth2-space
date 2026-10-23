@@ -149,3 +149,14 @@ export function sundayTitleFromDateKey(dateKey: string): string {
 export function dateKeyToKstNoonIso(dateKey: string): string {
   return `${dateKey}T12:00:00.000+09:00`;
 }
+
+/**
+ * `<input type="datetime-local">` 값(`YYYY-MM-DDTHH:mm`, 시간대 없음)을 서울 시각으로 읽어 ISO로 바꾼다.
+ * 서버(Vercel)는 UTC라 `new Date(value)`로 읽으면 9시간 밀려 저녁 모임이 다음 날로 저장된다.
+ * 이미 시간대가 붙은 값은 그대로 해석한다.
+ */
+export function kstLocalDateTimeToIso(value: string): string {
+  const hasZone = /(Z|[+-]\d{2}:?\d{2})$/i.test(value);
+  const withSeconds = /T\d{2}:\d{2}$/.test(value) ? `${value}:00` : value;
+  return new Date(hasZone ? value : `${withSeconds}+09:00`).toISOString();
+}
