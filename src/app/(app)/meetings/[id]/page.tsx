@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { auth } from "@/auth";
 import {
   setPrayerLeader,
   updateMeetingNotes,
@@ -12,7 +11,7 @@ import { MeetingGuestPanel } from "@/components/meeting-guest-panel";
 import { MeetingScriptureBlock } from "@/components/meeting-scripture";
 import { Button, Card, CardHeader, Textarea } from "@/components/ui";
 import { kstDateKeyNow } from "@/lib/kst-date";
-import { canViewMeetingAsset } from "@/lib/meeting-assets";
+import { canUploadMeetingScore, canViewMeetingAsset, SCORE_UPLOAD_NOTICE } from "@/lib/meeting-assets";
 import { guestCanOpenMeeting, guestMeetingDayOpen, isScopedMeetingGuest, meetingGuestIds } from "@/lib/meeting-guest";
 import { resolveMeetingScripture } from "@/lib/meeting-scripture";
 import { getCurrentUser } from "@/lib/auth";
@@ -33,8 +32,6 @@ export default async function MeetingDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const session = await auth();
-  const user = session!.user;
   const currentUser = await getCurrentUser();
   const canAdmin = currentUser ? canManageApp(currentUser) : false;
   const canEditAnnouncement = currentUser ? canManageAnnouncements(currentUser) : false;
@@ -113,7 +110,7 @@ export default async function MeetingDetailPage({
   const prayerLeaderName = prayerLeaderId
     ? loginUsers.find((l) => l.id === prayerLeaderId)?.name
     : undefined;
-  const isPrayerLeader = prayerLeaderId === user.id;
+  const canUploadScore = canUploadMeetingScore(meeting, currentUser);
   const hatQuery = `?return=${encodeURIComponent(meetingReturnPath(id))}`;
 
   return (
@@ -140,7 +137,7 @@ export default async function MeetingDetailPage({
       <Card>
         <CardHeader
           title="1. 기도회"
-          subtitle="이번 모임에서 인도할 가장을 고릅니다. 악보는 그 인도자만 올릴 수 있습니다."
+          subtitle="이번 모임에서 인도할 가장을 고릅니다. 악보는 그 인도자와 임원이 올립니다."
         />
         <div className="space-y-3 p-4 sm:p-5">
           <p className="text-sm text-stone-700">
@@ -175,8 +172,10 @@ export default async function MeetingDetailPage({
             emptyLabel="아직 악보 없음"
             canPublishCommentary={false}
           />
-          {(isPrayerLeader || canAdmin) && prayerLeaderId && (
+          {canUploadScore ? (
             <MeetingFileUpload meetingId={id} kind="SCORE" label="악보 업로드" />
+          ) : (
+            <p className="text-xs text-muted-foreground">{SCORE_UPLOAD_NOTICE}</p>
           )}
         </div>
       </Card>

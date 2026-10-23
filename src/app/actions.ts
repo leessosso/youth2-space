@@ -7,7 +7,7 @@ import {
   isPastorOrAdmin,
   leaderCanAccessGroup,
 } from "@/lib/auth";
-import { canManageAnnouncements, canManageApp, isSpecialAttendance, meetingDutyUserId, SERVING_DUTY_BY_KEY } from "@/lib/types";
+import { canManageAnnouncements, canManageApp, isSpecialAttendance, SERVING_DUTY_BY_KEY } from "@/lib/types";
 import {
   assignMemberToGroup as assignMemberToGroupStore,
   createGroup as createGroupStore,
@@ -84,7 +84,7 @@ import {
   googleSheetExportUrl,
   parseFamilyFormationWorkbook,
 } from "@/lib/family-formation";
-import { MAX_MEETING_ASSET_BYTES } from "@/lib/meeting-assets";
+import { canUploadMeetingScore, MAX_MEETING_ASSET_BYTES, SCORE_UPLOAD_NOTICE } from "@/lib/meeting-assets";
 import { uploadMeetingFile } from "@/lib/storage";
 import { isValidPollDateKey } from "@/lib/poll-day";
 import { clearPollDaySettings, setPollDaySettings } from "@/lib/store/poll-day";
@@ -731,9 +731,8 @@ export async function uploadMeetingAsset(
   if (kind === "SCORE") {
     const meeting = await getMeetingById(meetingId);
     if (!meeting) return { error: "모임을 찾을 수 없습니다." };
-    const prayerLeaderId = meetingDutyUserId(meeting, "prayer_meeting_lead");
-    if (prayerLeaderId !== user.id && !manages) {
-      return { error: "기도회 인도자만 악보를 올릴 수 있습니다." };
+    if (!canUploadMeetingScore(meeting, actor ?? null)) {
+      return { error: SCORE_UPLOAD_NOTICE };
     }
   } else if (!manages) {
     return { error: "권한이 없습니다." };
