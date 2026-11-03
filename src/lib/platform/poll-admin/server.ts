@@ -1,9 +1,8 @@
-import { cert, getApp, getApps, initializeApp, type App } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
 import { FieldValue } from "firebase-admin/firestore";
 import { getDb } from "@/lib/firebase-admin";
 import { membersCol } from "@/lib/store/collections";
 import { getUserById } from "@/lib/store/users";
+import { readPollServiceAccount, signFirebaseCustomToken } from "@/lib/platform/poll-admin/custom-token";
 import {
   POLL_ADMIN_CODES_COLLECTION,
   generatePollAdminCode,
@@ -13,32 +12,21 @@ import {
   type PollAdminSubject,
 } from "@/lib/platform/poll-admin/contract";
 
-const POLL_APP_NAME = "dcc-poll";
-
 /**
  * dcc-poll 프로젝트 서비스 계정(셸 서버 env에만).
- * POLL_FIREBASE_PROJECT_ID(기본 dcc-poll), POLL_FIREBASE_CLIENT_EMAIL, POLL_FIREBASE_PRIVATE_KEY.
+ * POLL_FIREBASE_CLIENT_EMAIL, POLL_FIREBASE_PRIVATE_KEY. (POLL_FIREBASE_PROJECT_ID는 문서용, 토큰 서명에는 쓰지 않음)
  */
 export function isPollFirebaseConfigured(): boolean {
-  return Boolean(
-    process.env.POLL_FIREBASE_CLIENT_EMAIL?.trim() && process.env.POLL_FIREBASE_PRIVATE_KEY?.trim(),
-  );
-}
-
-function pollApp(): App {
-  if (getApps().some((a) => a.name === POLL_APP_NAME)) return getApp(POLL_APP_NAME);
-  const projectId = process.env.POLL_FIREBASE_PROJECT_ID?.trim() || "dcc-poll";
-  const clientEmail = process.env.POLL_FIREBASE_CLIENT_EMAIL?.trim();
-  const privateKey = process.env.POLL_FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
-  if (!clientEmail || !privateKey) throw new Error("POLL_FIREBASE_* is not configured");
-  return initializeApp({ credential: cert({ projectId, clientEmail, privateKey }), projectId }, POLL_APP_NAME);
+  return readPollServiceAccount() !== null;
 }
 
 export async function mintPollCustomToken(
   uid: string,
   claims: { admin: true; mid: string },
 ): Promise<string> {
-  return getAuth(pollApp()).createCustomToken(uid, claims);
+  const account = readPollServiceAccount();
+  if (!account) throw new Error("POLL_FIREBASE_* is not configured");
+  return signFirebaseCustomToken(account, uid, claims);
 }
 
 /** users.id → 셸 회원 id(mid). 연결된 members 문서가 정확히 하나일 때만. */
