@@ -33,7 +33,7 @@ export default function middleware(
 
 export const config = {
   matcher: [
-    // api/platform/* 는 라우트에서 자체 auth·mustChangePassword 처리 (미들웨어 JWT 이중 검증·Firebase 유발 방지)
-    "/((?!api/auth|api/cron|api/platform|_next/static|_next/image|favicon.ico|favicon.png|manifest.webmanifest|firebase-messaging-sw.js|icons/).*)",
+    // api/platform/*·api/poll/* 는 라우트에서 자체 auth·mustChangePassword 처리 (미들웨어 JWT 이중 검증·Firebase 유발 방지)
+    "/((?!api/auth|api/cron|api/platform|api/poll|_next/static|_next/image|favicon.ico|favicon.png|manifest.webmanifest|firebase-messaging-sw.js|icons/).*)",
   ],
 };
