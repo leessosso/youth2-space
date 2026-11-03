@@ -14,9 +14,12 @@ import {
   type ExchangeDeps,
   type PollAdminCodeRecord,
 } from "../src/lib/platform/poll-admin/contract";
-import type { Role } from "../src/lib/types";
+import type { OfficerTitle, Role } from "../src/lib/types";
 
-function makeDeps(records: Map<string, PollAdminCodeRecord>, roles: Record<string, Role>, now = 1_000_000) {
+type U = { role: Role; officerTitle: OfficerTitle | null };
+const u = (role: Role, officerTitle: OfficerTitle | null = null): U => ({ role, officerTitle });
+
+function makeDeps(records: Map<string, PollAdminCodeRecord>, roles: Record<string, U>, now = 1_000_000) {
   const minted: Array<{ uid: string; claims: unknown }> = [];
   const deps: ExchangeDeps = {
     async consume(hash) {
@@ -24,7 +27,7 @@ function makeDeps(records: Map<string, PollAdminCodeRecord>, roles: Record<strin
       records.delete(hash);
       return r;
     },
-    async currentRole(id) {
+    async currentUser(id) {
       return roles[id] ?? null;
     },
     async mintToken(uid, claims) {
@@ -36,11 +39,12 @@ function makeDeps(records: Map<string, PollAdminCodeRecord>, roles: Record<strin
   return { deps, minted };
 }
 
-test("관리 권한은 ADMIN·PASTOR만", () => {
-  assert.equal(canAdministerPoll("ADMIN"), true);
-  assert.equal(canAdministerPoll("PASTOR"), true);
-  assert.equal(canAdministerPoll("LEADER"), false);
-  assert.equal(canAdministerPoll("ATTENDEE"), false);
+test("관리 권한은 ADMIN·PASTOR·임원", () => {
+  assert.equal(canAdministerPoll(u("ADMIN")), true);
+  assert.equal(canAdministerPoll(u("PASTOR")), true);
+  assert.equal(canAdministerPoll(u("LEADER", "총무")), true);
+  assert.equal(canAdministerPoll(u("LEADER")), false);
+  assert.equal(canAdministerPoll(u("ATTENDEE")), false);
   assert.equal(canAdministerPoll(null), false);
 });
 
@@ -72,7 +76,7 @@ test("code는 프래그먼트에 싣는다", () => {
 test("정상 교환: admin true(boolean)·mid만 클레임, 같은 code 재사용은 410", async () => {
   const code = generatePollAdminCode();
   const records = new Map([[hashPollAdminCode(code), newPollAdminCodeRecord("mem1", "u1", 999_000)]]);
-  const { deps, minted } = makeDeps(records, { u1: "ADMIN" });
+  const { deps, minted } = makeDeps(records, { u1: u("ADMIN") });
   const body = { code, audience: POLL_ADMIN_AUDIENCE };
   const ok = await exchangePollAdminCode({ body, sessionUserId: "u1" }, deps);
   assert.deepEqual(ok, { status: 200, body: { firebaseToken: "custom-token" } });
@@ -84,20 +88,22 @@ test("정상 교환: admin true(boolean)·mid만 클레임, 같은 code 재사�
 test("오류 코드: audience 400, 형식 400, 만료 410, 강등 403, 세션 불일치 403", async () => {
   const code = generatePollAdminCode();
   const fresh = () => new Map([[hashPollAdminCode(code), newPollAdminCodeRecord("m", "u1", 999_000)]]);
-  const run = async (body: unknown, roles: Record<string, Role>, session: string | null, now = 1_000_000) =>
+  const run = async (body: unknown, roles: Record<string, U>, session: string | null, now = 1_000_000) =>
     (await exchangePollAdminCode({ body, sessionUserId: session }, makeDeps(fresh(), roles, now).deps)).status;
-  assert.equal(await run({ code, audience: "x" }, { u1: "ADMIN" }, "u1"), 400);
-  assert.equal(await run({ code: "bad", audience: POLL_ADMIN_AUDIENCE }, { u1: "ADMIN" }, "u1"), 400);
-  assert.equal(await run({ code, audience: POLL_ADMIN_AUDIENCE }, { u1: "ADMIN" }, "u1", 1_060_000), 410);
-  assert.equal(await run({ code, audience: POLL_ADMIN_AUDIENCE }, { u1: "LEADER" }, "u1"), 403);
-  assert.equal(await run({ code, audience: POLL_ADMIN_AUDIENCE }, { u1: "ADMIN" }, "u2"), 403);
+  assert.equal(await run({ code, audience: "x" }, { u1: u("ADMIN") }, "u1"), 400);
+  assert.equal(await run({ code: "bad", audience: POLL_ADMIN_AUDIENCE }, { u1: u("ADMIN") }, "u1"), 400);
+  assert.equal(await run({ code, audience: POLL_ADMIN_AUDIENCE }, { u1: u("ADMIN") }, "u1", 1_060_000), 410);
+  assert.equal(await run({ code, audience: POLL_ADMIN_AUDIENCE }, { u1: u("LEADER") }, "u1"), 403);
+  assert.equal(await run({ code, audience: POLL_ADMIN_AUDIENCE }, { u1: u("ADMIN") }, "u2"), 403);
+  assert.equal(await run({ code, audience: POLL_ADMIN_AUDIENCE }, { u1: u("ATTENDEE") }, "u1"), 403);
+  assert.equal(await run({ code, audience: POLL_ADMIN_AUDIENCE }, { u1: u("LEADER", "회장") }, "u1"), 200);
   assert.equal(await run({ code, audience: POLL_ADMIN_AUDIENCE }, {}, "u1"), 401);
 });
 
 test("토큰 발급 실패는 500", async () => {
   const code = generatePollAdminCode();
   const records = new Map([[hashPollAdminCode(code), newPollAdminCodeRecord("m", "u1", 999_000)]]);
-  const { deps } = makeDeps(records, { u1: "PASTOR" });
+  const { deps } = makeDeps(records, { u1: u("PASTOR") });
   deps.mintToken = async () => {
     throw new Error("x");
   };

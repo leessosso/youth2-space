@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { exchangePollAdminCode, isAllowedPollOrigin } from "@/lib/platform/poll-admin/contract";
 import {
   consumePollAdminCode,
-  currentShellRole,
+  currentShellUser,
   isPollFirebaseConfigured,
   mintPollCustomToken,
 } from "@/lib/platform/poll-admin/server";
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     { body, sessionUserId: session?.user?.id ?? null },
     {
       consume: consumePollAdminCode,
-      currentRole: currentShellRole,
+      currentUser: currentShellUser,
       mintToken: mintPollCustomToken,
     },
   );

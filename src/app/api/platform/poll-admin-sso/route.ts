@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { canAdministerPoll, parsePollReturnTo, pollReturnUrlWithCode } from "@/lib/platform/poll-admin/contract";
-import { currentShellRole, issuePollAdminCode, resolveMidForUser } from "@/lib/platform/poll-admin/server";
+import { currentShellUser, issuePollAdminCode, resolveMidForUser } from "@/lib/platform/poll-admin/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -15,7 +15,7 @@ function noStore(res: NextResponse): NextResponse {
 
 /**
  * 투표 /admin → 셸 진입점. GET /api/platform/poll-admin-sso?return_to=<투표 관리자 URL>
- * 셸 관리자(ADMIN·PASTOR)이면 60초 일회용 code를 발급해 return_to#code=… 로 돌려보낸다.
+ * 셸 관리자(ADMIN·PASTOR·임원)이면 60초 일회용 code를 발급해 return_to#code=… 로 돌려보낸다.
  */
 export async function GET(request: Request) {
   const reqUrl = new URL(request.url);
@@ -34,9 +34,9 @@ export async function GET(request: Request) {
     return noStore(NextResponse.redirect(new URL("/change-password", request.url)));
   }
 
-  // 세션 role은 재로그인 전까지 옛 값일 수 있어 Firestore 현재 값으로 다시 본다.
-  const role = await currentShellRole(session.user.id);
-  if (!canAdministerPoll(role)) {
+  // 세션 role·직책은 재로그인 전까지 옛 값일 수 있어 Firestore 현재 값으로 다시 본다.
+  const shellUser = await currentShellUser(session.user.id);
+  if (!canAdministerPoll(shellUser)) {
     return noStore(NextResponse.json({ error: "forbidden" }, { status: 403 }));
   }
 

@@ -1,5 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
-import type { Role } from "@/lib/types";
+import { canManageApp, type User } from "@/lib/types";
+
+export type PollAdminSubject = Pick<User, "role" | "officerTitle">;
 
 /** docs/security-shell-admin.md(poll) 계약. 투표 앱 관리자 교환 전용 audience. */
 export const POLL_ADMIN_AUDIENCE = "dcc-poll-admin" as const;
@@ -21,11 +23,11 @@ const POLL_RETURN_PATH_PREFIX: Record<string, string> = {
 };
 
 /**
- * 투표 관리자 권한: 셸 ADMIN·PASTOR만.
- * LEADER(가장)·임원(officerTitle)은 셸에서도 앱 관리 권한이 없으므로 제외한다.
+ * 투표 관리자 권한: 셸 ADMIN·PASTOR·임원(officerTitle). 셸의 앱 관리 권한(canManageApp)과 같다.
+ * officerTitle 없는 LEADER(가장)·ATTENDEE는 제외.
  */
-export function canAdministerPoll(role: Role | null | undefined): boolean {
-  return role === "ADMIN" || role === "PASTOR";
+export function canAdministerPoll(user: PollAdminSubject | null | undefined): boolean {
+  return Boolean(user) && canManageApp(user!);
 }
 
 /** 128비트보다 넉넉한 256비트 랜덤, base64url(URL·프래그먼트 안전). */
@@ -113,8 +115,8 @@ export type ExchangeInput = {
 export type ExchangeDeps = {
   /** code 해시로 기록을 꺼내고 같은 트랜잭션에서 지운다(있든 없든 1회용). */
   consume(codeHash: string): Promise<PollAdminCodeRecord | null>;
-  /** 교환 시점의 셸 역할(강등 반영). 사용자가 없으면 null */
-  currentRole(userId: string): Promise<Role | null>;
+  /** 교환 시점의 셸 역할·직책(강등 반영). 사용자가 없으면 null */
+  currentUser(userId: string): Promise<PollAdminSubject | null>;
   mintToken(uid: string, claims: { admin: true; mid: string }): Promise<string>;
   now?: () => number;
 };
@@ -147,9 +149,9 @@ export async function exchangePollAdminCode(
     return { status: 403, body: { error: "session_mismatch" } };
   }
 
-  const role = await deps.currentRole(record.userId);
-  if (!role) return { status: 401, body: { error: "unauthenticated" } };
-  if (!canAdministerPoll(role)) return { status: 403, body: { error: "forbidden" } };
+  const user = await deps.currentUser(record.userId);
+  if (!user) return { status: 401, body: { error: "unauthenticated" } };
+  if (!canAdministerPoll(user)) return { status: 403, body: { error: "forbidden" } };
 
   try {
     const firebaseToken = await deps.mintToken(pollAdminUid(record.mid), pollAdminClaims(record.mid));

@@ -4,13 +4,13 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getDb } from "@/lib/firebase-admin";
 import { membersCol } from "@/lib/store/collections";
 import { getUserById } from "@/lib/store/users";
-import type { Role } from "@/lib/types";
 import {
   POLL_ADMIN_CODES_COLLECTION,
   generatePollAdminCode,
   hashPollAdminCode,
   newPollAdminCodeRecord,
   type PollAdminCodeRecord,
+  type PollAdminSubject,
 } from "@/lib/platform/poll-admin/contract";
 
 const POLL_APP_NAME = "dcc-poll";
@@ -48,9 +48,9 @@ export async function resolveMidForUser(userId: string): Promise<string | null> 
   return snap.docs[0].id;
 }
 
-export async function currentShellRole(userId: string): Promise<Role | null> {
+export async function currentShellUser(userId: string): Promise<PollAdminSubject | null> {
   const user = await getUserById(userId);
-  return user?.role ?? null;
+  return user ? { role: user.role, officerTitle: user.officerTitle } : null;
 }
 
 export async function issuePollAdminCode(mid: string, userId: string): Promise<string> {

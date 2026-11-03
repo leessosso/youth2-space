@@ -8,7 +8,7 @@
 - 투표 `/admin`에 세션이 없을 때 보내는 셸 진입점.
 - `return_to`는 `https://dcc.leessosso.uk/poll/…` 또는 `https://leessosso.github.io/poll…`만(https, 그 외 400).
 - 셸 미로그인 → `/login?callbackUrl=…`, 비밀번호 변경 필요 → `/change-password`.
-- 현재 Firestore 역할이 ADMIN·PASTOR가 아니면 403, `members.userId`로 연결된 회원(mid)이 정확히 하나가 아니면 403 `member_not_linked`.
+- 현재 Firestore 역할·직책이 ADMIN·PASTOR·임원이 아니면 403, `members.userId`로 연결된 회원(mid)이 정확히 하나가 아니면 403 `member_not_linked`.
 - 통과하면 일회용 code를 발급하고 `return_to#code=<code>`로 302.
 
 ### 2. `POST /api/poll/firebase-token`
@@ -23,7 +23,7 @@
 - 교환 요청에서 조회되면 성공·실패와 관계없이 트랜잭션으로 즉시 삭제(재시도해도 두 번 못 씀). 만료된 채 교환되지 않은 문서는 남으므로 Firestore TTL 정책(`expiresAt`는 숫자라 별도 Timestamp 필드 필요) 또는 정리 작업은 후속.
 
 ## 관리자 권한
-ADMIN·PASTOR만. LEADER(가장)·임원(officerTitle)·ATTENDEE는 제외. 교환 시점에도 Firestore 역할을 다시 읽어 강등을 반영한다.
+ADMIN·PASTOR·임원(officerTitle 있음). 셸의 앱 관리 권한 `canManageApp`과 같다. officerTitle 없는 LEADER(가장)·ATTENDEE는 제외. 발급·교환 때 모두 Firestore에서 역할·직책을 다시 읽어 강등·임기 종료를 반영한다.
 
 ## 세션 쿠키
 셸 세션 쿠키(NextAuth, SameSite=Lax)는 투표 오리진에서의 교차 사이트 fetch에 실리지 않는다. 그래서 교환은 code를 1차 자격 증명으로 쓰고(발급 때 셸 세션·관리자 역할 확인, 60초·1회용·사용자 결합), 쿠키가 실려 오면 code 발급 사용자와 같아야 한다. 쿠키가 없다는 이유만으로 401을 주지 않는다.
