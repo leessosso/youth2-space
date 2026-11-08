@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { canManageApp, type User } from "@/lib/types";
+import { isPollTokenMintError, type PollTokenMintReason } from "@/lib/platform/poll-admin/token-mint-diagnostic";
 
 export type PollAdminSubject = Pick<User, "role" | "officerTitle">;
 
@@ -123,7 +124,7 @@ export type ExchangeDeps = {
 
 export type ExchangeResult =
   | { status: 200; body: { firebaseToken: string } }
-  | { status: 400 | 401 | 403 | 410 | 500; body: { error: string } };
+  | { status: 400 | 401 | 403 | 410 | 500; body: { error: string; reason?: PollTokenMintReason } };
 
 export async function exchangePollAdminCode(
   input: ExchangeInput,
@@ -156,7 +157,10 @@ export async function exchangePollAdminCode(
   try {
     const firebaseToken = await deps.mintToken(pollAdminUid(record.mid), pollAdminClaims(record.mid));
     return { status: 200, body: { firebaseToken } };
-  } catch {
+  } catch (err) {
+    if (isPollTokenMintError(err)) {
+      return { status: 500, body: { error: "token_mint_failed", reason: err.reason } };
+    }
     return { status: 500, body: { error: "token_mint_failed" } };
   }
 }

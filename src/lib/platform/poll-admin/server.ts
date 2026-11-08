@@ -3,6 +3,7 @@ import { getDb } from "@/lib/firebase-admin";
 import { membersCol } from "@/lib/store/collections";
 import { getUserById } from "@/lib/store/users";
 import { readPollServiceAccount, signFirebaseCustomToken } from "@/lib/platform/poll-admin/custom-token";
+import { PollTokenMintError } from "@/lib/platform/poll-admin/token-mint-diagnostic";
 import {
   POLL_ADMIN_CODES_COLLECTION,
   generatePollAdminCode,
@@ -23,9 +24,10 @@ export function isPollFirebaseConfigured(): boolean {
 export async function mintPollCustomToken(
   uid: string,
   claims: { admin: true; mid: string },
+  env: NodeJS.ProcessEnv = process.env,
 ): Promise<string> {
-  const account = readPollServiceAccount();
-  if (!account) throw new Error("POLL_FIREBASE_* is not configured");
+  const account = readPollServiceAccount(env);
+  if (!account) throw new PollTokenMintError("env_missing");
   return signFirebaseCustomToken(account, uid, claims);
 }
 
