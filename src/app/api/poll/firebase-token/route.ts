@@ -7,6 +7,7 @@ import {
   isPollFirebaseConfigured,
   mintPollCustomToken,
 } from "@/lib/platform/poll-admin/server";
+import { logTokenMintFailure } from "@/lib/platform/poll-admin/token-mint-diagnostic";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -37,6 +38,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "origin_not_allowed" }, { status: 403, headers });
   }
   if (!isPollFirebaseConfigured()) {
+    logTokenMintFailure("env_missing");
     return NextResponse.json({ error: "not_configured" }, { status: 500, headers });
   }
 
@@ -56,6 +58,8 @@ export async function POST(request: Request) {
       mintToken: mintPollCustomToken,
     },
   );
-  if (result.status === 500) console.error("[poll-admin] firebase custom token mint failed");
+  if (result.status === 500 && result.body.error === "token_mint_failed") {
+    logTokenMintFailure(result.body.reason);
+  }
   return NextResponse.json(result.body, { status: result.status, headers });
 }

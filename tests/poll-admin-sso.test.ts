@@ -108,5 +108,5 @@ test("토큰 발급 실패는 500", async () => {
     throw new Error("x");
   };
   const r = await exchangePollAdminCode({ body: { code, audience: POLL_ADMIN_AUDIENCE }, sessionUserId: null }, deps);
-  assert.equal(r.status, 500);
+  assert.deepEqual(r, { status: 500, body: { error: "token_mint_failed" } });
 });
