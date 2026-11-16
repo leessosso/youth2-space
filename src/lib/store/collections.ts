@@ -19,6 +19,7 @@ import type {
   User,
   WorshipService,
 } from "@/lib/types";
+import type { MonthlyAssembly } from "@/lib/monthly-assembly";
 import type { Term } from "@/lib/term";
 
 /** 빌드 시 Firestore에 연결하지 않도록 컬렉션 참조를 첫 사용 시점에 만든다. */
@@ -39,6 +40,7 @@ export const membersCol = lazyCollection<Omit<Member, "id">>("members");
 export const groupLeaderTermsCol = lazyCollection<Omit<GroupLeaderTerm, "id">>("groupLeaderTerms");
 export const officerAppointmentsCol = lazyCollection<Omit<OfficerAppointment, "id">>("officerAppointments");
 export const leaderMeetingsCol = lazyCollection<Omit<LeaderMeeting, "id">>("leaderMeetings");
+export const monthlyAssembliesCol = lazyCollection<Omit<MonthlyAssembly, "id">>("monthlyAssemblies");
 export const meetingAssetsCol = lazyCollection<Omit<MeetingAsset, "id">>("meetingAssets");
 export const worshipServicesCol = lazyCollection<Omit<WorshipService, "id">>("worshipServices");
 export const seatingZonesCol = lazyCollection<Omit<SeatingZone, "id">>("seatingZones");

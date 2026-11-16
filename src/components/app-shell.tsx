@@ -28,6 +28,7 @@ function navFor(
     { href: "/dashboard", label: "홈" },
     { href: "/attendance", label: "출석" },
     { href: "/meetings", label: "리더모임" },
+    { href: "/assemblies", label: "월례회" },
     { href: familyReportHref, label: "돌봄카드" },
     { href: "/surveys", label: "참여조사" },
     { href: "/announcements", label: "공지" },
@@ -85,7 +86,7 @@ export function AppShell({
 
   return (
     <div className="flex h-full min-h-screen flex-col bg-background text-foreground lg:flex-row">
-      <aside className="hidden lg:flex lg:w-60 lg:shrink-0 lg:flex-col lg:border-r lg:border-border lg:bg-surface">
+      <aside className="hidden lg:flex lg:w-60 lg:shrink-0 lg:flex-col lg:border-r lg:border-border lg:bg-surface print:hidden">
         <div className="border-b border-border px-5 py-4">
           <Link
             href="/dashboard"
@@ -110,7 +111,7 @@ export function AppShell({
       </aside>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <header className="shrink-0 border-b border-border bg-surface lg:hidden">
+        <header className="shrink-0 border-b border-border bg-surface print:hidden lg:hidden">
           <div className="flex flex-nowrap items-center gap-2 px-3 py-2 sm:px-4">
             <Link
               href="/dashboard"
