@@ -45,6 +45,17 @@ export type WorshipRow = {
   mealService: string;
 };
 
+/** 예배 순서에서 사람을 적는 칸. 날짜는 여기 넣지 않는다. */
+export const WORSHIP_PERSON_FIELDS = [
+  { key: "sermon", label: "설교" },
+  { key: "liturgy", label: "예배안내/윗정리" },
+  { key: "worshipPrayer", label: "예배를 위한 기도회" },
+  { key: "repPrayer", label: "대표기도" },
+  { key: "offeringPrayer", label: "헌금기도" },
+  { key: "offeringCommittee", label: "헌금위원" },
+  { key: "mealService", label: "식당봉사" },
+] as const satisfies readonly { key: keyof WorshipRow; label: string }[];
+
 export type NewFamilyReport = {
   registered: string;
   attended: string;
@@ -66,12 +77,10 @@ export type TeamSection = {
   coramdeoRows: CountRow[] | null;
 };
 
-export type BusinessItem = {
-  title: string;
-  date: string;
-  place: string;
-  people: string;
-  note: string;
+/** 사업보고. 팀 사역보고와 같이 지난달 내용과 이번달 계획만 적는다. */
+export type BusinessReport = {
+  lastMonth: string;
+  thisMonth: string;
 };
 
 export type CalendarRow = {
@@ -96,7 +105,7 @@ export type MonthlyAssembly = {
   previousWeeks: HeadcountPoint[];
   worship: WorshipRow[];
   teams: TeamSection[];
-  business: BusinessItem[];
+  business: BusinessReport;
   finance: string;
   safety: string;
   other: string;
@@ -120,7 +129,6 @@ type Viewer = Pick<User, "id" | "role" | "officerTitle">;
 const ANNUAL_SLOTS = 12;
 const WEEK_SLOTS = 5;
 const WORSHIP_SLOTS = 5;
-const BUSINESS_SLOTS = 8;
 const CALENDAR_SLOTS = 5;
 const CORAM_SLOTS = 6;
 
@@ -191,7 +199,7 @@ export function blankAssembly(year: number, month: number, now = new Date().toIS
     previousWeeks: Array.from({ length: WEEK_SLOTS }, () => ({ label: "", dept4: null, dept13: null })),
     worship: Array.from({ length: WORSHIP_SLOTS }, emptyWorship),
     teams: MONTHLY_TEAMS.map(emptyTeam),
-    business: [],
+    business: { lastMonth: "", thisMonth: "" },
     finance: "",
     safety: "",
     other: "",
@@ -265,8 +273,38 @@ function pad<T>(items: T[], size: number, make: () => T): T[] {
   return next;
 }
 
+function readBusiness(value: unknown): BusinessReport {
+  if (typeof value === "string") return { lastMonth: value, thisMonth: "" };
+  if (Array.isArray(value)) {
+    const lines = value
+      .map((item) => {
+        if (!item || typeof item !== "object") return "";
+        const row = item as Record<string, unknown>;
+        const title = text(row.title);
+        const detail = [
+          text(row.date) && `일시: ${text(row.date)}`,
+          text(row.place) && `장소: ${text(row.place)}`,
+          text(row.people) && `인원: ${text(row.people)}`,
+        ]
+          .filter(Boolean)
+          .join(" · ");
+        return [title, detail, text(row.note)].filter(Boolean).join("\n");
+      })
+      .filter(Boolean);
+    return { lastMonth: lines.join("\n\n"), thisMonth: "" };
+  }
+  if (value && typeof value === "object") {
+    const row = value as Partial<BusinessReport>;
+    return { lastMonth: text(row.lastMonth), thisMonth: text(row.thisMonth) };
+  }
+  return { lastMonth: "", thisMonth: "" };
+}
+
 /** 저장본에 칸이 빠져 있어도 화면과 폼이 같은 뼈대를 쓰게 맞춘다. */
-export function normalizeAssembly(id: string, data: Partial<MonthlyAssembly>): MonthlyAssembly {
+export function normalizeAssembly(
+  id: string,
+  data: Omit<Partial<MonthlyAssembly>, "business"> & { business?: unknown },
+): MonthlyAssembly {
   const [yearText, monthText] = id.split("-");
   const year = data.year ?? Number(yearText);
   const month = data.month ?? Number(monthText);
@@ -303,13 +341,7 @@ export function normalizeAssembly(id: string, data: Partial<MonthlyAssembly>): M
       emptyWorship,
     ),
     teams: base.teams.map((team) => asTeam(teamsByKey.get(team.teamKey), team)),
-    business: (data.business ?? []).map((item) => ({
-      title: text(item.title),
-      date: text(item.date),
-      place: text(item.place),
-      people: text(item.people),
-      note: text(item.note),
-    })),
+    business: readBusiness(data.business),
     finance: text(data.finance),
     safety: text(data.safety),
     other: text(data.other),
@@ -338,6 +370,10 @@ export function nextAssemblyFrom(
     goalCoramdeo: prev.goalCoramdeo,
     agendaOwners: [...prev.agendaOwners],
     annual: prev.annual.map((point) => ({ ...point })),
+    business: {
+      lastMonth: prev.business.thisMonth,
+      thisMonth: "",
+    },
     teams: prev.teams.map((team) => ({
       ...team,
       lastMonth: team.thisMonth,
@@ -446,6 +482,42 @@ export function annualPointsFromWeekly(
   return points;
 }
 
+/** 저장된 `8/2`를 해당 월례회 해의 달력 값으로 바꾼다. 읽지 못하면 빈 칸. */
+export function worshipDateToInput(stored: string, year: number): string {
+  const trimmed = stored.trim();
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed);
+  if (iso) {
+    const month = Number(iso[2]);
+    const day = Number(iso[3]);
+    if (!isCalendarDate(year, month, day)) return "";
+    return `${year}-${iso[2]}-${iso[3]}`;
+  }
+  const short = /^(\d{1,2})\s*[/.-]\s*(\d{1,2})$/.exec(trimmed);
+  if (!short) return "";
+  const month = Number(short[1]);
+  const day = Number(short[2]);
+  if (!isCalendarDate(year, month, day)) return "";
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+/** 달력 입력(`2026-08-02`)을 자료에 쓰는 `8/2`로 바꾼다. 이미 짧은 표기면 그대로 둔다. */
+export function worshipDateFromInput(value: string): string {
+  const trimmed = value.trim();
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed);
+  if (!iso) return trimmed;
+  const year = Number(iso[1]);
+  const month = Number(iso[2]);
+  const day = Number(iso[3]);
+  if (!isCalendarDate(year, month, day)) return "";
+  return `${month}/${day}`;
+}
+
+function isCalendarDate(year: number, month: number, day: number): boolean {
+  if (month < 1 || month > 12 || day < 1 || day > 31) return false;
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+}
+
 function field(fd: FormData, name: string): string {
   const value = fd.get(name);
   return typeof value === "string" ? value.trim() : "";
@@ -467,8 +539,12 @@ function pointFromForm(fd: FormData, prefix: string, index: number): HeadcountPo
 }
 
 export function assemblyFromForm(current: MonthlyAssembly, fd: FormData, now = new Date().toISOString()): MonthlyAssembly {
+  const business = {
+    lastMonth: field(fd, "businessLast"),
+    thisMonth: field(fd, "businessPlan"),
+  };
   const worship = current.worship.map((_, index) => ({
-    date: field(fd, `worship_${index}_date`),
+    date: worshipDateFromInput(field(fd, `worship_${index}_date`)),
     sermon: field(fd, `worship_${index}_sermon`),
     liturgy: field(fd, `worship_${index}_liturgy`),
     worshipPrayer: field(fd, `worship_${index}_worshipPrayer`),
@@ -477,17 +553,6 @@ export function assemblyFromForm(current: MonthlyAssembly, fd: FormData, now = n
     offeringCommittee: field(fd, `worship_${index}_offeringCommittee`),
     mealService: field(fd, `worship_${index}_mealService`),
   }));
-  const business: BusinessItem[] = [];
-  for (let index = 0; index < BUSINESS_SLOTS; index += 1) {
-    const item = {
-      title: field(fd, `biz_${index}_title`),
-      date: field(fd, `biz_${index}_date`),
-      place: field(fd, `biz_${index}_place`),
-      people: field(fd, `biz_${index}_people`),
-      note: field(fd, `biz_${index}_note`),
-    };
-    if (item.title || item.date || item.place || item.people || item.note) business.push(item);
-  }
   return {
     ...current,
     verse: field(fd, "verse") || current.verse,
