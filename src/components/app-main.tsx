@@ -11,7 +11,7 @@ export function AppMain({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+    <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8 print:max-w-none print:px-0 print:py-0">
       {children}
     </main>
   );

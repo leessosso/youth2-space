@@ -9,6 +9,7 @@ export type HomeCardId =
   | "training_attendance_overview"
   | "training_participants"
   | "upcoming_meeting"
+  | "monthly_assembly"
   | "care"
   | "training_hub"
   | "members_officers";
@@ -33,6 +34,7 @@ const CARD_ORDER: HomeCardId[] = [
   "training_attendance_overview",
   "training_participants",
   "upcoming_meeting",
+  "monthly_assembly",
   "care",
   "training_hub",
   "members_officers",
@@ -42,12 +44,13 @@ const CARDS_BY_PERSONA: Record<PlatformPersona, HomeCardId[]> = {
   pastor_officer: [
     "weekly_attendance",
     "upcoming_meeting",
+    "monthly_assembly",
     "training_hub",
     "members_officers",
   ],
-  family_head: ["my_family_attendance", "upcoming_meeting", "care"],
-  ministry_team_lead: ["upcoming_meeting"],
-  new_family_lead: ["new_family_group", "upcoming_meeting"],
+  family_head: ["my_family_attendance", "upcoming_meeting", "monthly_assembly", "care"],
+  ministry_team_lead: ["upcoming_meeting", "monthly_assembly"],
+  new_family_lead: ["new_family_group", "upcoming_meeting", "monthly_assembly"],
   training_manager: ["training_attendance_overview", "training_participants"],
   training_participant: ["training_self_checkin"],
   meeting_attendee: ["upcoming_meeting"],
@@ -134,6 +137,13 @@ function cardDefinitions(ctx: HomeCardBuildContext): Record<HomeCardId, HomeCard
       title: "참여자",
       description: "프로그램 참여자 명단과 출석을 관리합니다.",
       href: TRAINING_SSO_ENTRY_PATH,
+      variant: "default",
+    },
+    monthly_assembly: {
+      id: "monthly_assembly",
+      title: "월례회",
+      description: "이번 달 월례회 자료를 보고, 담당 팀은 사역보고를 입력합니다.",
+      href: "/assemblies",
       variant: "default",
     },
     upcoming_meeting: {

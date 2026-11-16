@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { getDb } from "../src/lib/firebase-admin";
+import { august2026Sample } from "../src/lib/monthly-assembly";
 import { hashPassword } from "../src/lib/password";
 
 const COLLECTIONS = [
@@ -10,6 +11,7 @@ const COLLECTIONS = [
   "worshipServices",
   "meetingAssets",
   "leaderMeetings",
+  "monthlyAssemblies",
   "groupLeaderTerms",
   "officerAppointments",
   "members",
@@ -176,6 +178,10 @@ async function main() {
     startedAt: "2025-07-01T00:00:00.000Z",
     endedAt: "2025-12-31T00:00:00.000Z",
   });
+
+  const august = august2026Sample(now);
+  const { id: augustId, ...augustBody } = august;
+  await getDb().collection("monthlyAssemblies").doc(augustId).set(augustBody);
 
   const meetingRef = getDb().collection("leaderMeetings").doc();
   await meetingRef.set({
