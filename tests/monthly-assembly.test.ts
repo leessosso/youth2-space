@@ -7,9 +7,12 @@ import {
   blankAssembly,
   canViewAssembly,
   editableTeamKeys,
+  normalizeAssembly,
   nextAssemblyFrom,
   weeklyHeadcount,
   weekPointsForMonth,
+  worshipDateFromInput,
+  worshipDateToInput,
   type SundayHeadcount,
 } from "../src/lib/monthly-assembly";
 import type { User } from "../src/lib/types";
@@ -89,16 +92,41 @@ test("팀장 저장은 담당자 지정을 지우지 않는다", () => {
   assert.equal(team?.thisMonth, "이번 연습");
 });
 
-test("전체 저장은 빈 사업 줄을 뺀다", () => {
+test("사업보고는 지난달과 이번달 글만 저장한다", () => {
   const current = blankAssembly(2026, 8);
   const fd = new FormData();
   fd.set("verse", "시험 구절");
-  fd.set("biz_0_title", "여름수련회");
-  fd.set("biz_0_date", "7.2");
-  fd.set("biz_1_title", "");
+  fd.set("businessLast", "여름수련회\n일시: 7.2");
+  fd.set("businessPlan", "가을 행사 준비");
   const next = assemblyFromForm(current, fd);
   assert.equal(next.verse, "시험 구절");
-  assert.deepEqual(next.business, [
-    { title: "여름수련회", date: "7.2", place: "", people: "", note: "" },
-  ]);
+  assert.deepEqual(next.business, {
+    lastMonth: "여름수련회\n일시: 7.2",
+    thisMonth: "가을 행사 준비",
+  });
+});
+
+test("예전 사업 목록은 지난달 글로 이어 읽는다", () => {
+  const assembly = normalizeAssembly("2026-08", {
+    business: [{ title: "여름수련회", date: "7.2", place: "수양관", people: "", note: "" }],
+  });
+  assert.equal(assembly.business.lastMonth, "여름수련회\n일시: 7.2 · 장소: 수양관");
+  assert.equal(assembly.business.thisMonth, "");
+});
+
+test("예배 일시 8/2는 그해 달력 값으로 읽고, 저장은 8/2로 남긴다", () => {
+  assert.equal(worshipDateToInput("8/2", 2026), "2026-08-02");
+  assert.equal(worshipDateToInput("08/02", 2026), "2026-08-02");
+  assert.equal(worshipDateToInput("2/29", 2026), "");
+  assert.equal(worshipDateFromInput("2026-08-02"), "8/2");
+
+  const current = blankAssembly(2026, 8);
+  const fd = new FormData();
+  fd.set("worship_0_date", "2026-08-02");
+  fd.set("worship_0_sermon", "user-sermon");
+  fd.set("worship_1_date", "8/9");
+  const next = assemblyFromForm(current, fd);
+  assert.equal(next.worship[0]?.date, "8/2");
+  assert.equal(next.worship[0]?.sermon, "user-sermon");
+  assert.equal(next.worship[1]?.date, "8/9");
 });

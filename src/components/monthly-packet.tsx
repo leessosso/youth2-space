@@ -1,6 +1,7 @@
 import { AttendanceChart } from "@/components/attendance-chart";
 import {
   MONTHLY_AGENDA,
+  WORSHIP_PERSON_FIELDS,
   assemblyTitle,
   previousMonth,
   visiblePoints,
@@ -16,7 +17,15 @@ function Block({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
-export function MonthlyPacket({ assembly }: { assembly: MonthlyAssembly }) {
+export function MonthlyPacket({
+  assembly,
+  ownerLabels,
+  personNames = {},
+}: {
+  assembly: MonthlyAssembly;
+  ownerLabels?: string[];
+  personNames?: Record<string, string>;
+}) {
   const prev = previousMonth(assembly.year, assembly.month);
   const weeks = visiblePoints(assembly.previousWeeks);
   const worship = assembly.worship.filter((row) =>
@@ -40,7 +49,7 @@ export function MonthlyPacket({ assembly }: { assembly: MonthlyAssembly }) {
         <ol className="grid gap-x-4 px-4 pb-4 text-sm sm:grid-cols-3">
           {MONTHLY_AGENDA.map((item, index) => (
             <li key={`${item.title}-${index}`}>
-              {index + 1}. {item.title} – {assembly.agendaOwners[index] || item.role}
+              {index + 1}. {item.title} – {ownerLabels?.[index] || assembly.agendaOwners[index] || item.role}
             </li>
           ))}
         </ol>
@@ -76,13 +85,9 @@ export function MonthlyPacket({ assembly }: { assembly: MonthlyAssembly }) {
               {worship.map((row) => (
                 <tr key={row.date + row.sermon} className="border-b border-border">
                   <td className="py-1">{row.date}</td>
-                  <td>{row.sermon}</td>
-                  <td>{row.liturgy}</td>
-                  <td>{row.worshipPrayer}</td>
-                  <td>{row.repPrayer}</td>
-                  <td>{row.offeringPrayer}</td>
-                  <td>{row.offeringCommittee}</td>
-                  <td>{row.mealService}</td>
+                  {WORSHIP_PERSON_FIELDS.map((field) => (
+                    <td key={field.key}>{personNames[row[field.key]] || row[field.key]}</td>
+                  ))}
                 </tr>
               ))}
             </tbody>
@@ -137,22 +142,10 @@ export function MonthlyPacket({ assembly }: { assembly: MonthlyAssembly }) {
 
       <section className="mt-8">
         <h2 className="text-base font-semibold">5. 사업보고</h2>
-        {assembly.business.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">등록된 사업이 없습니다.</p>
-        ) : (
-          <ol className="mt-2 space-y-3 text-sm">
-            {assembly.business.map((item, index) => (
-              <li key={`${item.title}-${index}`}>
-                <p className="font-medium">
-                  {index + 1}. {item.title}
-                </p>
-                <p>{[item.date && `일시: ${item.date}`, item.place && `장소: ${item.place}`].filter(Boolean).join(" · ")}</p>
-                {item.people && <p>인원: {item.people}</p>}
-                {item.note && <p className="whitespace-pre-wrap">{item.note}</p>}
-              </li>
-            ))}
-          </ol>
-        )}
+        <p className="mt-2 text-sm font-medium">지난달 사역</p>
+        <p className="text-sm leading-6 whitespace-pre-wrap">{assembly.business.lastMonth || "—"}</p>
+        <p className="mt-2 text-sm font-medium">이번달 계획</p>
+        <p className="text-sm leading-6 whitespace-pre-wrap">{assembly.business.thisMonth || "—"}</p>
       </section>
 
       <Block title="6. 회계보고(별첨자료)">{assembly.finance || "—"}</Block>

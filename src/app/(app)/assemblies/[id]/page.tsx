@@ -5,13 +5,19 @@ import { MonthlyPacket } from "@/components/monthly-packet";
 import { PrintButton } from "@/components/print-button";
 import { Badge, Button } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
+import { agendaOwnerText } from "@/lib/agenda-people";
 import {
+  MONTHLY_AGENDA,
+  WORSHIP_PERSON_FIELDS,
   assemblyTitle,
   canManageAssembly,
   canViewAssembly,
   editableTeamKeys,
 } from "@/lib/monthly-assembly";
+import { loadAgendaPeople } from "@/lib/store/agenda-people";
 import { getMonthlyAssembly } from "@/lib/store/monthly-assemblies";
+import { getUsersByIds } from "@/lib/store/users";
+import type { User } from "@/lib/types";
 
 export default async function AssemblyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -21,6 +27,17 @@ export default async function AssemblyPage({ params }: { params: Promise<{ id: s
 
   const manages = canManageAssembly(user);
   const canEdit = editableTeamKeys(user, assembly).length > 0;
+  const agendaPeople = await loadAgendaPeople(assembly.year, assembly.month);
+  const personIds = [
+    ...assembly.agendaOwners,
+    ...assembly.worship.flatMap((row) => WORSHIP_PERSON_FIELDS.map((field) => row[field.key])),
+  ].filter(Boolean);
+  const people = personIds.length > 0 ? await getUsersByIds(personIds) : new Map<string, User>();
+  const personNames = Object.fromEntries([...people].map(([id, member]) => [id, member.name]));
+  const ownerLabels = MONTHLY_AGENDA.map((item, index) => {
+    const stored = assembly.agendaOwners[index] ?? "";
+    return agendaOwnerText(stored, item.role, agendaPeople, personNames[stored]);
+  });
 
   return (
     <div>
@@ -65,7 +82,7 @@ export default async function AssemblyPage({ params }: { params: Promise<{ id: s
           )}
         </div>
       </div>
-      <MonthlyPacket assembly={assembly} />
+      <MonthlyPacket assembly={assembly} ownerLabels={ownerLabels} personNames={personNames} />
     </div>
   );
 }

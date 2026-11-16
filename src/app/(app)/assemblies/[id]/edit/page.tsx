@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { MonthlyAssemblyForm } from "@/components/monthly-assembly-form";
 import { getCurrentUser } from "@/lib/auth";
 import { assemblyTitle, canViewAssembly, editableTeamKeys } from "@/lib/monthly-assembly";
+import { loadAgendaPeople, loadTermHeadIds } from "@/lib/store/agenda-people";
 import { getMonthlyAssembly } from "@/lib/store/monthly-assemblies";
 import { listAllUsers } from "@/lib/store/users";
 import { isMeetingAttendee } from "@/lib/types";
@@ -23,7 +24,11 @@ export default async function AssemblyEditPage({
   const teamKeys = editableTeamKeys(user, assembly);
   if (teamKeys.length === 0) notFound();
 
-  const users = (await listAllUsers()).filter((member) => !isMeetingAttendee(member.role));
+  const [users, agendaPeople, headIds] = await Promise.all([
+    listAllUsers().then((members) => members.filter((member) => !isMeetingAttendee(member.role))),
+    loadAgendaPeople(assembly.year, assembly.month),
+    loadTermHeadIds(assembly.year, assembly.month),
+  ]);
   const attendanceNote =
     query.attendance === "filled"
       ? "출석 기록으로 칸을 채웠습니다."
@@ -43,6 +48,8 @@ export default async function AssemblyEditPage({
         assembly={assembly}
         users={users}
         teamKeys={teamKeys}
+        agendaPeople={agendaPeople}
+        headIds={headIds}
         attendanceNote={attendanceNote}
       />
     </div>

@@ -1,8 +1,11 @@
 import { fillAttendance, saveAssembly, saveTeamSection } from "@/app/assembly-actions";
 import { Button, Input, Label, Textarea } from "@/components/ui";
+import { agendaPersonLabel, worshipPeopleGroups, type AgendaPerson } from "@/lib/agenda-people";
 import {
   MONTHLY_AGENDA,
   MONTHLY_TEAMS,
+  WORSHIP_PERSON_FIELDS,
+  worshipDateToInput,
   type MonthlyAssembly,
   type MonthlyTeamKey,
   type TeamSection,
@@ -108,26 +111,73 @@ function TeamFields({
   );
 }
 
+function WorshipPersonSelect({
+  name,
+  label,
+  stored,
+  heads,
+  others,
+}: {
+  name: string;
+  label: string;
+  stored: string;
+  heads: { userId: string; name: string }[];
+  others: { userId: string; name: string }[];
+}) {
+  const known = heads.some((person) => person.userId === stored) || others.some((person) => person.userId === stored);
+  const legacy = stored && !known ? stored : "";
+  return (
+    <select
+      name={name}
+      defaultValue={known || legacy ? stored : ""}
+      className={selectClass}
+      aria-label={label}
+    >
+      <option value="">미지정</option>
+      {legacy ? <option value={legacy}>{legacy}</option> : null}
+      {heads.length > 0 && (
+        <optgroup label="가장">
+          {heads.map((person) => (
+            <option key={person.userId} value={person.userId}>
+              {person.name}
+            </option>
+          ))}
+        </optgroup>
+      )}
+      {others.length > 0 && (
+        <optgroup label="다른 사람">
+          {others.map((person) => (
+            <option key={person.userId} value={person.userId}>
+              {person.name}
+            </option>
+          ))}
+        </optgroup>
+      )}
+    </select>
+  );
+}
+
 export function MonthlyAssemblyForm({
   assembly,
   users,
   teamKeys,
+  agendaPeople,
+  headIds,
   attendanceNote,
 }: {
   assembly: MonthlyAssembly;
   users: User[];
   teamKeys: MonthlyTeamKey[];
+  agendaPeople: AgendaPerson[];
+  headIds: string[];
   attendanceNote?: string;
 }) {
   const full = teamKeys.length === MONTHLY_TEAMS.length;
   const teams = assembly.teams.filter((team) => teamKeys.includes(team.teamKey));
-  const business = Array.from({ length: 8 }, (_, index) => assembly.business[index] ?? {
-    title: "",
-    date: "",
-    place: "",
-    people: "",
-    note: "",
-  });
+  const worshipPeople = worshipPeopleGroups(
+    users.map((user) => ({ userId: user.id, name: user.name })),
+    headIds,
+  );
 
   if (!full) {
     return (
@@ -198,14 +248,47 @@ export function MonthlyAssemblyForm({
 
         <fieldset className="grid gap-2">
           <legend className="text-sm font-semibold">순서 담당</legend>
-          {MONTHLY_AGENDA.map((item, index) => (
-            <label key={`${item.title}-${index}`} className="grid gap-1 text-sm sm:grid-cols-[8rem_1fr] sm:items-center">
-              <span>
-                {index + 1}. {item.title}
-              </span>
-              <Input name={`agenda_${index}`} defaultValue={assembly.agendaOwners[index] ?? ""} placeholder={item.role} />
-            </label>
-          ))}
+          {MONTHLY_AGENDA.map((item, index) => {
+            const stored = assembly.agendaOwners[index] ?? "";
+            const known = agendaPeople.some((person) => person.userId === stored);
+            const legacy = stored && stored !== item.role && !known ? stored : "";
+            const officers = agendaPeople.filter((person) => person.group === "officer");
+            const leaders = agendaPeople.filter((person) => person.group === "leader");
+            return (
+              <label key={`${item.title}-${index}`} className="grid gap-1 text-sm sm:grid-cols-[8rem_1fr] sm:items-center">
+                <span>
+                  {index + 1}. {item.title}
+                </span>
+                <select
+                  name={`agenda_${index}`}
+                  defaultValue={known || legacy ? stored : ""}
+                  className={selectClass}
+                  aria-label={`${item.title} 담당`}
+                >
+                  <option value="">미지정</option>
+                  {legacy ? <option value={legacy}>{legacy}</option> : null}
+                  {officers.length > 0 && (
+                    <optgroup label="임원">
+                      {officers.map((person) => (
+                        <option key={person.userId} value={person.userId}>
+                          {agendaPersonLabel(person)}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {leaders.length > 0 && (
+                    <optgroup label="가장">
+                      {leaders.map((person) => (
+                        <option key={person.userId} value={person.userId}>
+                          {agendaPersonLabel(person)}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                </select>
+              </label>
+            );
+          })}
         </fieldset>
 
         <fieldset>
@@ -223,14 +306,22 @@ export function MonthlyAssemblyForm({
           <legend className="text-sm font-semibold">예배 순서</legend>
           {assembly.worship.map((row, index) => (
             <div key={index} className="grid gap-2 border-t border-border pt-3 sm:grid-cols-2">
-              <Input name={`worship_${index}_date`} defaultValue={row.date} placeholder="8/2" aria-label="날짜" />
-              <Input name={`worship_${index}_sermon`} defaultValue={row.sermon} placeholder="설교" aria-label="설교" />
-              <Input name={`worship_${index}_liturgy`} defaultValue={row.liturgy} placeholder="예배안내/윗정리" aria-label="예배안내" />
-              <Input name={`worship_${index}_worshipPrayer`} defaultValue={row.worshipPrayer} placeholder="예배를 위한 기도회" aria-label="기도회" />
-              <Input name={`worship_${index}_repPrayer`} defaultValue={row.repPrayer} placeholder="대표기도" aria-label="대표기도" />
-              <Input name={`worship_${index}_offeringPrayer`} defaultValue={row.offeringPrayer} placeholder="헌금기도" aria-label="헌금기도" />
-              <Input name={`worship_${index}_offeringCommittee`} defaultValue={row.offeringCommittee} placeholder="헌금위원" aria-label="헌금위원" />
-              <Input name={`worship_${index}_mealService`} defaultValue={row.mealService} placeholder="식당봉사" aria-label="식당봉사" />
+              <Input
+                type="date"
+                name={`worship_${index}_date`}
+                defaultValue={worshipDateToInput(row.date, assembly.year)}
+                aria-label="일시"
+              />
+              {WORSHIP_PERSON_FIELDS.map((field) => (
+                <WorshipPersonSelect
+                  key={field.key}
+                  name={`worship_${index}_${field.key}`}
+                  label={field.label}
+                  stored={row[field.key]}
+                  heads={worshipPeople.heads}
+                  others={worshipPeople.others}
+                />
+              ))}
             </div>
           ))}
         </fieldset>
@@ -241,17 +332,14 @@ export function MonthlyAssemblyForm({
 
         <fieldset className="grid gap-3">
           <legend className="text-sm font-semibold">사업보고</legend>
-          {business.map((item, index) => (
-            <div key={index} className="grid gap-2 border-t border-border pt-3">
-              <Input name={`biz_${index}_title`} defaultValue={item.title} placeholder="사업 이름" aria-label="사업 이름" />
-              <div className="grid gap-2 sm:grid-cols-2">
-                <Input name={`biz_${index}_date`} defaultValue={item.date} placeholder="일시" aria-label="일시" />
-                <Input name={`biz_${index}_place`} defaultValue={item.place} placeholder="장소" aria-label="장소" />
-              </div>
-              <Input name={`biz_${index}_people`} defaultValue={item.people} placeholder="인원" aria-label="인원" />
-              <Textarea name={`biz_${index}_note`} defaultValue={item.note} rows={2} placeholder="메모" />
-            </div>
-          ))}
+          <div>
+            <Label>지난달 사역</Label>
+            <Textarea name="businessLast" defaultValue={assembly.business.lastMonth} />
+          </div>
+          <div>
+            <Label>이번달 계획</Label>
+            <Textarea name="businessPlan" defaultValue={assembly.business.thisMonth} />
+          </div>
         </fieldset>
 
         <div>
