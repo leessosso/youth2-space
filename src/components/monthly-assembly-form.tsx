@@ -60,34 +60,6 @@ function TeamFields({
           </select>
         </div>
       )}
-      {team.newFamily && (
-        <div className="grid gap-2">
-          <div>
-            <Label>등록</Label>
-            <Textarea name="nf_registered" defaultValue={team.newFamily.registered} rows={2} />
-          </div>
-          <div>
-            <Label>출석</Label>
-            <Textarea name="nf_attended" defaultValue={team.newFamily.attended} rows={2} />
-          </div>
-          <div>
-            <Label>등반</Label>
-            <Textarea name="nf_promoted" defaultValue={team.newFamily.promoted} rows={2} />
-          </div>
-          <div>
-            <Label>수료</Label>
-            <Textarea name="nf_completed" defaultValue={team.newFamily.completed} rows={2} />
-          </div>
-          <div>
-            <Label>분기 평균</Label>
-            <Textarea name="nf_quarter" defaultValue={team.newFamily.quarter} rows={2} />
-          </div>
-          <div>
-            <Label>이번 달 메모</Label>
-            <Textarea name="nf_monthNote" defaultValue={team.newFamily.monthNote} rows={2} />
-          </div>
-        </div>
-      )}
       <div>
         <Label>지난달 사역</Label>
         <Textarea name={`last_${team.teamKey}`} defaultValue={team.lastMonth} />
@@ -98,11 +70,11 @@ function TeamFields({
       </div>
       {team.coramdeoRows && (
         <div className="grid gap-2">
-          <p className="text-sm text-stone-700">기도회 인원</p>
+          <p className="text-sm font-medium">기도회 인원현황</p>
           {team.coramdeoRows.map((row, index) => (
             <div key={index} className="grid grid-cols-2 gap-2">
-              <Input name={`coram_${index}_label`} defaultValue={row.label} placeholder="35명 (7/1)" aria-label="기도회" />
-              <Input name={`coram_${index}_count`} defaultValue={row.count} placeholder="인원 또는 메모" aria-label="인원" />
+              <Input name={`coram_${index}_label`} defaultValue={row.label} placeholder="7/1" aria-label="기도회 날짜" />
+              <Input name={`coram_${index}_count`} defaultValue={row.count} placeholder="35명" aria-label="기도회 인원" />
             </div>
           ))}
         </div>
