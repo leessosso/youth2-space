@@ -107,22 +107,13 @@ export function MonthlyPacket({
               <h3 className="text-sm font-semibold">
                 ({index + 1}) {team.teamName}
               </h3>
-              {team.newFamily && (
-                <ul className="mt-2 list-disc pl-5 text-sm leading-6">
-                  <li>등록: {team.newFamily.registered || "—"}</li>
-                  <li>출석: {team.newFamily.attended || "—"}</li>
-                  <li>등반: {team.newFamily.promoted || "—"}</li>
-                  <li>수료: {team.newFamily.completed || "—"}</li>
-                  {team.newFamily.quarter && <li>분기 평균: {team.newFamily.quarter}</li>}
-                  {team.newFamily.monthNote && <li>{team.newFamily.monthNote}</li>}
-                </ul>
-              )}
               <p className="mt-2 text-sm font-medium">지난달 사역</p>
               <p className="text-sm leading-6 whitespace-pre-wrap">{team.lastMonth || "—"}</p>
               <p className="mt-2 text-sm font-medium">이번달 계획</p>
               <p className="text-sm leading-6 whitespace-pre-wrap">{team.thisMonth || "—"}</p>
               {team.coramdeoRows && team.coramdeoRows.some((row) => row.label || row.count) && (
                 <table className="mt-2 w-full border-collapse text-center text-sm">
+                  <caption className="mb-1 text-left text-sm font-medium">기도회 인원현황</caption>
                   <tbody>
                     {team.coramdeoRows
                       .filter((row) => row.label || row.count)

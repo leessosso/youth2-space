@@ -56,15 +56,6 @@ export const WORSHIP_PERSON_FIELDS = [
   { key: "mealService", label: "식당봉사" },
 ] as const satisfies readonly { key: keyof WorshipRow; label: string }[];
 
-export type NewFamilyReport = {
-  registered: string;
-  attended: string;
-  promoted: string;
-  completed: string;
-  quarter: string;
-  monthNote: string;
-};
-
 export type CountRow = { label: string; count: string };
 
 export type TeamSection = {
@@ -73,7 +64,7 @@ export type TeamSection = {
   editorUserId: string | null;
   lastMonth: string;
   thisMonth: string;
-  newFamily: NewFamilyReport | null;
+  /** 코람데오 기도회 인원. 다른 팀은 null. */
   coramdeoRows: CountRow[] | null;
 };
 
@@ -140,17 +131,6 @@ export function assemblyTitle(assembly: Pick<MonthlyAssembly, "year" | "month">)
   return `${assembly.year}년 ${assembly.month}월 월례회`;
 }
 
-function emptyNewFamily(): NewFamilyReport {
-  return {
-    registered: "",
-    attended: "",
-    promoted: "",
-    completed: "",
-    quarter: "",
-    monthNote: "",
-  };
-}
-
 function emptyWorship(): WorshipRow {
   return {
     date: "",
@@ -175,7 +155,6 @@ function emptyTeam(team: (typeof MONTHLY_TEAMS)[number]): TeamSection {
     editorUserId: null,
     lastMonth: "",
     thisMonth: "",
-    newFamily: team.key === "new_family" ? emptyNewFamily() : null,
     coramdeoRows:
       team.key === "coramdeo"
         ? Array.from({ length: CORAM_SLOTS }, () => ({ label: "", count: "" }))
@@ -230,27 +209,32 @@ function asPoint(value: unknown): HeadcountPoint {
   return { label: text(row.label), dept4: nullableCount(row.dept4), dept13: nullableCount(row.dept13) };
 }
 
+/** 예전 새가족 칸(등록·출석·등반·수료)을 지난달 사역 글로 붙인다. */
+function foldLegacyNewFamily(lastMonth: string, family: unknown): string {
+  if (!family || typeof family !== "object") return lastMonth;
+  const row = family as Record<string, unknown>;
+  const lines = [
+    text(row.registered) && `등록: ${text(row.registered)}`,
+    text(row.attended) && `출석: ${text(row.attended)}`,
+    text(row.promoted) && `등반: ${text(row.promoted)}`,
+    text(row.completed) && `수료: ${text(row.completed)}`,
+    text(row.quarter) && `분기 평균: ${text(row.quarter)}`,
+    text(row.monthNote),
+  ].filter(Boolean);
+  const extra = lines.join("\n");
+  if (!extra || lastMonth.includes(extra)) return lastMonth;
+  return [extra, lastMonth].filter(Boolean).join("\n\n");
+}
+
 function asTeam(value: unknown, fallback: TeamSection): TeamSection {
-  const row = value && typeof value === "object" ? (value as Partial<TeamSection>) : {};
-  const family = row.newFamily;
+  const row = value && typeof value === "object" ? (value as Partial<TeamSection> & { newFamily?: unknown }) : {};
   const rows = row.coramdeoRows;
   return {
     teamKey: fallback.teamKey,
     teamName: text(row.teamName) || fallback.teamName,
     editorUserId: typeof row.editorUserId === "string" && row.editorUserId ? row.editorUserId : null,
-    lastMonth: text(row.lastMonth),
+    lastMonth: foldLegacyNewFamily(text(row.lastMonth), row.newFamily),
     thisMonth: text(row.thisMonth),
-    newFamily:
-      fallback.newFamily == null
-        ? null
-        : {
-            registered: text(family?.registered),
-            attended: text(family?.attended),
-            promoted: text(family?.promoted),
-            completed: text(family?.completed),
-            quarter: text(family?.quarter),
-            monthNote: text(family?.monthNote),
-          },
     coramdeoRows:
       fallback.coramdeoRows == null
         ? null
@@ -378,7 +362,6 @@ export function nextAssemblyFrom(
       ...team,
       lastMonth: team.thisMonth,
       thisMonth: "",
-      newFamily: team.newFamily ? emptyNewFamily() : null,
       coramdeoRows: team.coramdeoRows
         ? team.coramdeoRows.map(() => ({ label: "", count: "" }))
         : null,
@@ -597,16 +580,6 @@ function teamFromForm(team: TeamSection, fd: FormData, includeEditor: boolean): 
     editorUserId: editor,
     lastMonth: field(fd, `last_${team.teamKey}`),
     thisMonth: field(fd, `plan_${team.teamKey}`),
-    newFamily: team.newFamily
-      ? {
-          registered: field(fd, "nf_registered"),
-          attended: field(fd, "nf_attended"),
-          promoted: field(fd, "nf_promoted"),
-          completed: field(fd, "nf_completed"),
-          quarter: field(fd, "nf_quarter"),
-          monthNote: field(fd, "nf_monthNote"),
-        }
-      : null,
     coramdeoRows: team.coramdeoRows
       ? team.coramdeoRows.map((_, index) => ({
           label: field(fd, `coram_${index}_label`),

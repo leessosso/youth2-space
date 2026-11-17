@@ -114,6 +114,22 @@ test("예전 사업 목록은 지난달 글로 이어 읽는다", () => {
   assert.equal(assembly.business.thisMonth, "");
 });
 
+test("예전 새가족 칸은 지난달 사역 글로 이어 읽는다", () => {
+  const assembly = normalizeAssembly("2026-08", {
+    teams: [
+      {
+        teamKey: "new_family",
+        teamName: "새가족팀",
+        lastMonth: "식사 교제",
+        newFamily: { registered: "3명", attended: "2명", promoted: "", completed: "", quarter: "", monthNote: "" },
+      } as never,
+    ],
+  });
+  const team = assembly.teams.find((item) => item.teamKey === "new_family");
+  assert.equal(team?.lastMonth, "등록: 3명\n출석: 2명\n\n식사 교제");
+  assert.equal(assembly.teams.find((item) => item.teamKey === "coramdeo")?.coramdeoRows?.length, 6);
+});
+
 test("예배 일시 8/2는 그해 달력 값으로 읽고, 저장은 8/2로 남긴다", () => {
   assert.equal(worshipDateToInput("8/2", 2026), "2026-08-02");
   assert.equal(worshipDateToInput("08/02", 2026), "2026-08-02");
