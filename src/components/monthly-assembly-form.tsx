@@ -314,26 +314,26 @@ export function MonthlyAssemblyForm({
           </div>
         </fieldset>
 
-        <div>
-          <Label>회계보고</Label>
+        <fieldset className="grid gap-3">
+          <legend className="text-sm font-semibold">회계보고</legend>
           <Textarea name="finance" defaultValue={assembly.finance} />
-        </div>
-        <div>
-          <Label>안건토의</Label>
+        </fieldset>
+        <fieldset className="grid gap-3">
+          <legend className="text-sm font-semibold">안건토의</legend>
           <Textarea name="safety" defaultValue={assembly.safety} />
-        </div>
-        <div>
-          <Label>기타토의</Label>
+        </fieldset>
+        <fieldset className="grid gap-3">
+          <legend className="text-sm font-semibold">기타토의</legend>
           <Textarea name="other" defaultValue={assembly.other} />
-        </div>
-        <div>
-          <Label>회의록 채택</Label>
+        </fieldset>
+        <fieldset className="grid gap-3">
+          <legend className="text-sm font-semibold">회의록 채택</legend>
           <Textarea name="minutes" defaultValue={assembly.minutes} />
-        </div>
-        <div>
-          <Label>광고</Label>
+        </fieldset>
+        <fieldset className="grid gap-3">
+          <legend className="text-sm font-semibold">광고</legend>
           <Textarea name="announcements" defaultValue={assembly.announcements} />
-        </div>
+        </fieldset>
 
         <fieldset className="grid gap-3">
           <legend className="text-sm font-semibold">행사 일정</legend>
